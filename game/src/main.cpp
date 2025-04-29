@@ -1,6 +1,14 @@
-#include <iostream>
-void main() {
+#include "engine.hpp"
 
-  std::cout << "Hello game";
+int main() {
+
+  tale::WriteLine("Hello Game!");
+
+
+  auto& engineInstance = tale::Engine::Instance();
+  engineInstance.Init();
+  engineInstance.Run();
+  engineInstance.Quit();
+
 
 }

@@ -1,5 +1,5 @@
-add_executable(my_game
+add_executable(game
     src/main.cpp
 )
-
-target_link_libraries(my_game PRIVATE tiny_ape_light)
+set_property(TARGET game PROPERTY CXX_STANDARD 20)
+target_link_libraries(game PRIVATE tiny_ape_light_engine)
