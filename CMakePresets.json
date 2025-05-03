@@ -11,7 +11,7 @@
         "CMAKE_CONFIGURATION_TYPES": "Debug",
         "CMAKE_BUILD_TYPE": "Debug",
         "CMAKE_CXX_FLAGS_DEBUG": "/Zi /MTd /Od /Ob0 /DDEBUG",
-        "CMAKE_CXX_FLAGS": "/W4 /WX"
+        "CMAKE_CXX_FLAGS": "/W4 /WX /EHsc"
       }
     },
     {
@@ -24,7 +24,7 @@
         "CMAKE_CONFIGURATION_TYPES": "RelWithDebInfo",
         "CMAKE_BUILD_TYPE": "RelWithDebInfo",
         "CMAKE_CXX_FLAGS_RELWITHDEBINFO": "/O2 /Zi /MT /DDEVELOP",
-        "CMAKE_CXX_FLAGS": "/W4 /WX"
+        "CMAKE_CXX_FLAGS": "/W4 /WX /EHsc"
       }
     },
     {
@@ -37,7 +37,7 @@
         "CMAKE_CONFIGURATION_TYPES": "Release",
         "CMAKE_BUILD_TYPE": "Release",
         "CMAKE_CXX_FLAGS_RELEASE": "/O2 /MT /DNDEBUG",
-        "CMAKE_CXX_FLAGS": "/W4 /WX"
+        "CMAKE_CXX_FLAGS": "/W4 /WX /EHsc"
       }
     },
     {
