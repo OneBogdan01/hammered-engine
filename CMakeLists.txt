@@ -4,6 +4,12 @@ cmake_minimum_required(VERSION 3.16.0)
 # Define the project name and programming language
 project(conflict_simulation LANGUAGES CXX)
 
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib/$<CONFIG>)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin/$<CONFIG>)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin/$<CONFIG>)
+
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+
 # Add the engine and game subdirectories, they contain their own CMakeLists.txt
 add_subdirectory(engine)
 add_subdirectory(game)
