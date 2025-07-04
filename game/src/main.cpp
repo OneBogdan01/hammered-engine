@@ -4,7 +4,7 @@
 
 int main()
 {
-  auto& engineInstance = tale::Engine::Instance();
+  auto& engineInstance = hm::Engine::Instance();
   engineInstance.Init();
   engineInstance.Run();
   engineInstance.Shutdown();
