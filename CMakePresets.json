@@ -5,7 +5,7 @@
       "name": "windows-msvc-debug",
       "displayName": "Windows MSVC Debug",
       "generator": "Visual Studio 17 2022",
-      "binaryDir": "${sourceDir}/out/build/${presetName}",
+      "binaryDir": "${sourceDir}/build/${presetName}",
       "architecture": "x64",
       "cacheVariables": {
         "CMAKE_CONFIGURATION_TYPES": "Debug",
@@ -18,7 +18,7 @@
       "name": "windows-msvc-develop",
       "displayName": "Windows MSVC Develop",
       "generator": "Visual Studio 17 2022",
-      "binaryDir": "${sourceDir}/out/build/${presetName}",
+      "binaryDir": "${sourceDir}/build/${presetName}",
       "architecture": "x64",
       "cacheVariables": {
         "CMAKE_CONFIGURATION_TYPES": "RelWithDebInfo",
@@ -31,7 +31,7 @@
       "name": "windows-msvc-release",
       "displayName": "Windows MSVC Release",
       "generator": "Visual Studio 17 2022",
-      "binaryDir": "${sourceDir}/out/build/${presetName}",
+      "binaryDir": "${sourceDir}/build/${presetName}",
       "architecture": "x64",
       "cacheVariables": {
         "CMAKE_CONFIGURATION_TYPES": "Release",
@@ -44,7 +44,7 @@
       "name": "linux-clang-debug",
       "displayName": "Linux Clang Debug",
       "generator": "Unix Makefiles",
-      "binaryDir": "${sourceDir}/out/build/${presetName}",
+      "binaryDir": "${sourceDir}/build/${presetName}",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
         "CMAKE_C_COMPILER": "clang",
@@ -57,7 +57,7 @@
       "name": "linux-clang-develop",
       "displayName": "Linux Clang Develop",
       "generator": "Unix Makefiles",
-      "binaryDir": "${sourceDir}/out/build/${presetName}",
+      "binaryDir": "${sourceDir}/build/${presetName}",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "RelWithDebInfo",
         "CMAKE_C_COMPILER": "clang",
@@ -70,7 +70,7 @@
       "name": "linux-clang-release",
       "displayName": "Linux Clang Release",
       "generator": "Unix Makefiles",
-      "binaryDir": "${sourceDir}/out/build/${presetName}",
+      "binaryDir": "${sourceDir}/build/${presetName}",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
         "CMAKE_C_COMPILER": "clang",

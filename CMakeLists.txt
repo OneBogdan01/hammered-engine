@@ -36,6 +36,59 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 add_subdirectory(engine)
 add_subdirectory(game)
 
+# Asset function
+
+function(configure_assets_for target)
+    set(ASSET_SOURCE_DIR "${CMAKE_SOURCE_DIR}/game/assets")
+
+    set(ASSET_BINARY_DIR "$<TARGET_FILE_DIR:${target}>/assets")
+    set(ASSET_SOLUTION_DIR "${CMAKE_CURRENT_BINARY_DIR}/assets")
+
+    add_custom_command(TARGET ${target} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${ASSET_SOURCE_DIR}"
+        "${ASSET_BINARY_DIR}"
+    )
+    add_custom_command(TARGET ${target} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${ASSET_SOURCE_DIR}"
+        "${ASSET_SOLUTION_DIR}"
+    )
+endfunction()
+
+# figure out final executable suffix
+set(EXE_SUFFIX "${CMAKE_EXECUTABLE_SUFFIX}")
+
+set(GAME_GL_EXECUTABLE_NAME "game_gl${EXE_SUFFIX}")
+set(GAME_VK_EXECUTABLE_NAME "game_vk${EXE_SUFFIX}")
+function(exec_macro_for target)
+    target_compile_definitions(${target}
+    PUBLIC
+        GAME_GL_EXECUTABLE_NAME="${GAME_GL_EXECUTABLE_NAME}"
+        GAME_VK_EXECUTABLE_NAME="${GAME_VK_EXECUTABLE_NAME}"
+)
+endfunction()
+
+# Create backends in a loop
+foreach(backend ${GAME_BACKENDS})
+    set(target_name "game_${backend}")
+    set(engine_target "hammered_engine_${backend}")
+    # TODO Needs to be extended for scripting capabilities
+    add_executable(${target_name} game/src/main.cpp)
+
+    target_link_libraries(${target_name} PRIVATE  ${engine_target})
+
+    exec_macro_for(${target_name})
+    exec_macro_for(${engine_target})
+      
+
+    set_property(TARGET ${target_name} PROPERTY CXX_STANDARD 20)
+    configure_assets_for(${target_name})
+
+endforeach()
+
+
+
 # Set the Visual Studio startup project to the first enabled backend executable
 list(GET GAME_BACKENDS 0 FIRST_BACKEND)
 
