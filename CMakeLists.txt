@@ -34,7 +34,6 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 # Add the engine and game subdirectories, they contain their own CMakeLists.txt
 add_subdirectory(engine)
-add_subdirectory(game)
 
 # Asset function
 
