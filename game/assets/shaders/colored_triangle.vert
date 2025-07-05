@@ -1,7 +1,7 @@
 #version 460
 
 layout (location = 0) out vec3 outColor;
-
+layout (location = 0) uniform mat4 uViewProj;
 void main() 
 {
 	//const array of positions for the triangle
@@ -19,6 +19,6 @@ void main()
 	);
 
 	//output the position of each vertex
-	gl_Position = vec4(positions[gl_VertexID], 1.0f);
+	gl_Position = uViewProj * vec4(positions[gl_VertexID], 1.0f);
 	outColor = colors[gl_VertexID];
 }
