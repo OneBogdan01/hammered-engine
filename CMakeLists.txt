@@ -77,6 +77,7 @@ foreach(backend ${GAME_BACKENDS})
 
     target_link_libraries(${target_name} PRIVATE  ${engine_target})
 
+    add_dependencies(${engine_target} shaders)
     exec_macro_for(${target_name})
     exec_macro_for(${engine_target})
       
