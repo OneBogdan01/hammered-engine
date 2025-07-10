@@ -29,16 +29,43 @@ if(NOT GAME_BACKENDS)
     message(FATAL_ERROR "No game backend enabled! Enable at least one of ENABLE_GL_BACKEND or ENABLE_VK_BACKEND")
 endif()
 
+# Copy build_backends.py from source root to build directory
+set(BUILD_SCRIPT_SRC "${CMAKE_SOURCE_DIR}/build_backends.py")
+set(BUILD_SCRIPT_DEST "${CMAKE_BINARY_DIR}/build_backends.py")
+
+add_custom_command(
+    OUTPUT ${BUILD_SCRIPT_DEST}
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            ${BUILD_SCRIPT_SRC}
+            ${BUILD_SCRIPT_DEST}
+    DEPENDS ${BUILD_SCRIPT_SRC}
+    COMMENT "Copying build_backends.py to build directory"
+)
+
+add_custom_target(copy_build_script ALL
+    DEPENDS ${BUILD_SCRIPT_DEST}
+)
+
+# Call build_backends.py directly from the source directory
+add_custom_target(run_build_backends
+    COMMAND ${CMAKE_COMMAND} -E echo "Running build_backends.py all"
+    COMMAND ${CMAKE_COMMAND} -E env python3 ${CMAKE_SOURCE_DIR}/build_backends.py all
+    COMMENT "Running backend build script from source root"
+)
+
+set_target_properties(copy_build_script PROPERTIES FOLDER "utilities")
+set_target_properties(run_build_backends PROPERTIES FOLDER "utilities")
+
+
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-# Add the engine and game subdirectories, they contain their own CMakeLists.txt
 add_subdirectory(engine)
 
 # Asset function
-
+set(ASSET_SOURCE_DIR "${CMAKE_SOURCE_DIR}/game/assets")
 function(configure_assets_for target)
-    set(ASSET_SOURCE_DIR "${CMAKE_SOURCE_DIR}/game/assets")
+
 
     set(ASSET_BINARY_DIR "$<TARGET_FILE_DIR:${target}>/assets")
     set(ASSET_SOLUTION_DIR "${CMAKE_CURRENT_BINARY_DIR}/assets")
@@ -67,6 +94,8 @@ function(exec_macro_for target)
         GAME_VK_EXECUTABLE_NAME="${GAME_VK_EXECUTABLE_NAME}"
 )
 endfunction()
+# compiles shaders
+add_subdirectory(game)
 
 # Create backends in a loop
 foreach(backend ${GAME_BACKENDS})
@@ -77,6 +106,10 @@ foreach(backend ${GAME_BACKENDS})
 
     target_link_libraries(${target_name} PRIVATE  ${engine_target})
 
+    # each engine backend compiles shaders
+    add_dependencies(${engine_target} shaders)
+    # compile all backends
+    add_dependencies(${engine_target} copy_build_script)
     exec_macro_for(${target_name})
     exec_macro_for(${engine_target})
       
@@ -87,11 +120,11 @@ foreach(backend ${GAME_BACKENDS})
 endforeach()
 
 
-
 # Set the Visual Studio startup project to the first enabled backend executable
 list(GET GAME_BACKENDS 0 FIRST_BACKEND)
 
 set(STARTUP_PROJECT "game_${FIRST_BACKEND}")
-message(STATUS "Setting VS startup project to ${STARTUP_PROJECT}")
 
+message(STATUS "Setting VS startup project to ${STARTUP_PROJECT}")
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${STARTUP_PROJECT})
+
