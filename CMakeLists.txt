@@ -109,7 +109,7 @@ foreach(backend ${GAME_BACKENDS})
     # each engine backend compiles shaders
     add_dependencies(${engine_target} shaders)
     # compile all backends
-    add_dependencies(${engine_target} copy_build_script)
+    add_dependencies(${engine_target} run_build_backends)
     exec_macro_for(${target_name})
     exec_macro_for(${engine_target})
       
