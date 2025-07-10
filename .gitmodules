@@ -1,6 +1,7 @@
 [submodule "engine/external/imgui"]
 	path = engine/external/imgui
 	url = https://github.com/ocornut/imgui.git
+	branch = docking
 [submodule "engine/external/SDL"]
 	path = engine/external/SDL
 	url = https://github.com/libsdl-org/SDL.git
