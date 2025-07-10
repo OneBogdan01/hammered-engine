@@ -323,8 +323,6 @@ void Device::InitPlatformImGui()
 
   ImGui_ImplVulkan_Init(&init_info);
 
-  ImGui_ImplVulkan_CreateFontsTexture();
-
   // add the destroy the imgui created structures
   _mainDeletionQueue.push_function(
       [=]()

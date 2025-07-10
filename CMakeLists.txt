@@ -1,8 +1,8 @@
-# Minimum required version of CMake
+﻿# Minimum required version of CMake
 cmake_minimum_required(VERSION 3.16.0)
 
 # Define the project name and programming language
-project(conflict_simulation)
+project(hammered_template)
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib/$<CONFIG>)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin/$<CONFIG>)
@@ -109,7 +109,7 @@ foreach(backend ${GAME_BACKENDS})
     # each engine backend compiles shaders
     add_dependencies(${engine_target} shaders)
     # compile all backends
-    add_dependencies(${engine_target} run_build_backends)
+    add_dependencies(${engine_target} copy_build_script)
     exec_macro_for(${target_name})
     exec_macro_for(${engine_target})
       
