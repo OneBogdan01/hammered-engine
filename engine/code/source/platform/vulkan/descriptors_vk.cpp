@@ -1,5 +1,5 @@
 ﻿#include "platform/vulkan/descriptors_vk.hpp"
-
+#include "platform/vulkan/types_vk.hpp"
 void DescriptorLayoutBuilder::add_binding(uint32_t binding,
                                           VkDescriptorType type)
 {

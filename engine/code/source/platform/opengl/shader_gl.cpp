@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <vector>
 #include <SDL3/SDL_assert.h>
 std::string hm::ShaderPaths::GetPath() const
 {
