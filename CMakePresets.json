@@ -3,12 +3,13 @@
   "configurePresets": [
     {
       "name": "windows-msvc-debug",
-      "displayName": "Windows MSVC Debug (Ninja)",
-      "generator": "Ninja",
+      "displayName": "Windows MSVC Debug",
+      "generator": "Visual Studio 17 2022",
       "binaryDir": "${sourceDir}/build/${presetName}",
+      "architecture": "x64",
       "cacheVariables": {
-        "CMAKE_C_COMPILER": "cl",
-        "CMAKE_CXX_COMPILER": "cl",
+        "CMAKE_CONFIGURATION_TYPES": "Debug",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
         "CMAKE_BUILD_TYPE": "Debug",
         "CMAKE_CXX_FLAGS_DEBUG": "/Zi /MTd /Od /Ob0 /DDEBUG",
         "CMAKE_CXX_FLAGS": "/W4 /WX /EHsc"
@@ -16,12 +17,13 @@
     },
     {
       "name": "windows-msvc-develop",
-      "displayName": "Windows MSVC Develop (Ninja)",
-      "generator": "Ninja",
+      "displayName": "Windows MSVC Develop",
+      "generator": "Visual Studio 17 2022",
       "binaryDir": "${sourceDir}/build/${presetName}",
+      "architecture": "x64",
       "cacheVariables": {
-        "CMAKE_C_COMPILER": "cl",
-        "CMAKE_CXX_COMPILER": "cl",
+        "CMAKE_CONFIGURATION_TYPES": "RelWithDebInfo",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
         "CMAKE_BUILD_TYPE": "RelWithDebInfo",
         "CMAKE_CXX_FLAGS_RELWITHDEBINFO": "/O2 /Zi /MT /DDEVELOP",
         "CMAKE_CXX_FLAGS": "/W4 /WX /EHsc"
@@ -29,12 +31,13 @@
     },
     {
       "name": "windows-msvc-release",
-      "displayName": "Windows MSVC Release (Ninja)",
-      "generator": "Ninja",
+      "displayName": "Windows MSVC Release",
+      "generator": "Visual Studio 17 2022",
       "binaryDir": "${sourceDir}/build/${presetName}",
+      "architecture": "x64",
       "cacheVariables": {
-        "CMAKE_C_COMPILER": "cl",
-        "CMAKE_CXX_COMPILER": "cl",
+        "CMAKE_CONFIGURATION_TYPES": "Release",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
         "CMAKE_BUILD_TYPE": "Release",
         "CMAKE_CXX_FLAGS_RELEASE": "/O2 /MT /DNDEBUG",
         "CMAKE_CXX_FLAGS": "/W4 /WX /EHsc"

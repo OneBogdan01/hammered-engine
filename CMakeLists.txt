@@ -1,8 +1,8 @@
-# Minimum required version of CMake
+﻿# Minimum required version of CMake
 cmake_minimum_required(VERSION 3.16.0)
 
 # Define the project name and programming language
-project(conflict_simulation)
+project(hammered_template)
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib/$<CONFIG>)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin/$<CONFIG>)
@@ -29,32 +29,23 @@ if(NOT GAME_BACKENDS)
     message(FATAL_ERROR "No game backend enabled! Enable at least one of ENABLE_GL_BACKEND or ENABLE_VK_BACKEND")
 endif()
 
-# Copy build_backends.py from source root to build directory
-set(BUILD_SCRIPT_SRC "${CMAKE_SOURCE_DIR}/build_backends.py")
+set(BUILD_SCRIPT_SRC  "${CMAKE_SOURCE_DIR}/build_backends.py")
 set(BUILD_SCRIPT_DEST "${CMAKE_BINARY_DIR}/build_backends.py")
 
-add_custom_command(
-    OUTPUT ${BUILD_SCRIPT_DEST}
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            ${BUILD_SCRIPT_SRC}
-            ${BUILD_SCRIPT_DEST}
-    DEPENDS ${BUILD_SCRIPT_SRC}
-    COMMENT "Copying build_backends.py to build directory"
+configure_file(
+    "${BUILD_SCRIPT_SRC}"            # input
+    "${BUILD_SCRIPT_DEST}"           # output
+    COPYONLY                         # copy byte‑for‑byte, update only if different
 )
 
-add_custom_target(copy_build_script ALL
-    DEPENDS ${BUILD_SCRIPT_DEST}
-)
-
-# Call build_backends.py directly from the source directory
-add_custom_target(run_build_backends
+# ── Utility target: run the helper script (e.g. ninja backends) ───────────
+add_custom_target(backends
     COMMAND ${CMAKE_COMMAND} -E echo "Running build_backends.py all"
-    COMMAND ${CMAKE_COMMAND} -E env python3 ${CMAKE_SOURCE_DIR}/build_backends.py all
-    COMMENT "Running backend build script from source root"
+    COMMAND ${CMAKE_COMMAND} -E env python3 "${BUILD_SCRIPT_DEST}" all
+    COMMENT "Building all graphics back‑ends"
 )
 
-set_target_properties(copy_build_script PROPERTIES FOLDER "utilities")
-set_target_properties(run_build_backends PROPERTIES FOLDER "utilities")
+set_target_properties(backends PROPERTIES FOLDER "utilities")
 
 
 
@@ -96,7 +87,22 @@ function(exec_macro_for target)
 endfunction()
 # compiles shaders
 add_subdirectory(game)
+function(add_backend_helper backend exe_target)
+    set(stamp "${CMAKE_CURRENT_BINARY_DIR}/.${backend}_resources.stamp")
 
+    # Custom command that (1) runs the helper, (2) touches a stamp file.
+    add_custom_command(
+        OUTPUT  "${stamp}"
+        COMMAND ${CMAKE_COMMAND} -E env
+                python3 "${CMAKE_BINARY_DIR}/build_backends.py" "${backend}"
+        COMMAND ${CMAKE_COMMAND} -E touch "${stamp}"
+        COMMENT "Generating resources for ${backend}"
+        VERBATIM)
+
+    # Make the executable depend on the stamp, not the other way around.
+    add_custom_target(resources_${backend} DEPENDS "${stamp}")
+    add_dependencies(${exe_target} resources_${backend})
+endfunction()
 # Create backends in a loop
 foreach(backend ${GAME_BACKENDS})
     set(target_name "game_${backend}")
@@ -108,8 +114,8 @@ foreach(backend ${GAME_BACKENDS})
 
     # each engine backend compiles shaders
     add_dependencies(${engine_target} shaders)
-    # compile all backends
-    add_dependencies(${engine_target} copy_build_script)
+
+    add_backend_helper(${backend} ${target_name})   
     exec_macro_for(${target_name})
     exec_macro_for(${engine_target})
       
