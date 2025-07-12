@@ -29,20 +29,25 @@ void RestartApplication()
     return;
   }
 
-  auto selectedAPI = LoadGraphicsAPIFromConfig();
+  const auto selectedAPI = LoadGraphicsAPIFromConfig();
 
-  const char* exeName = nullptr;
+  std::string exeName {};
 
   switch (selectedAPI)
   {
     case gfx::GRAPHICS_API::VULKAN:
-      exeName = GAME_VK_EXECUTABLE_NAME;
+      exeName = VkExe.empty() == false ? VkExe.data() : "";
       break;
     case gfx::GRAPHICS_API::OPENGL:
-      exeName = GAME_GL_EXECUTABLE_NAME;
+      exeName = GlExe.empty() == false ? GlExe.data() : "";
       break;
   }
 
+  if (exeName.empty())
+  {
+    log::Error("This backend was not compiled");
+    return;
+  }
   std::string exe_path = std::string(base_path) + exeName;
 
   char cmd[4096];

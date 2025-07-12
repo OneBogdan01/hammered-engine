@@ -1,8 +1,3 @@
-cmake_minimum_required(VERSION 3.16)
-
-# Set project version
-project(hammered_engine VERSION 1.0.0 LANGUAGES CXX)
-
 
 # Add dependencies
 add_subdirectory(external)
@@ -58,8 +53,3 @@ foreach(backend ${GAME_BACKENDS})
     # Set Visual Studio folder
     set_target_properties(${engine_target} PROPERTIES FOLDER "engine")
 endforeach()
-
-# Enable multi-threaded compile
-if(MSVC)
-    add_compile_options(/MP)
-endif()
