@@ -15,17 +15,22 @@
       }
     },
     {
-      "name": "windows-clang-ninja-debug",
-      "displayName": "Windows Clang Ninja Debug",
+      "name": "base",
+      "hidden": true,
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/${presetName}",
+      "installDir": "${sourceDir}/build/${presetName}/install",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-        "CMAKE_C_COMPILER": "clang",
-        "CMAKE_CXX_COMPILER": "clang++",
-        "CMAKE_CXX_FLAGS_DEBUG": "-g -O0 -DDEBUG -Wall -Wextra -Werror",
-        "CMAKE_CXX_FLAGS": ""
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "YES",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/build/${presetName}/install"
+      }
+    },
+    {
+      "name": "debug",
+      "inherits": "base",
+      "description": "Build with debug information",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
       }
     },
     {
@@ -97,12 +102,12 @@
   ],
   "buildPresets": [
     {
+      "name": "debug",
+      "configurePreset": "debug"
+    },
+    {
       "name": "windows-msvc-debug",
       "configurePreset": "windows-msvc-debug"
-    },
-   {
-      "name": "windows-msvc-ninja-debug",
-      "configurePreset": "windows-msvc-ninja-debug"
     },
     {
       "name": "windows-msvc-develop",
