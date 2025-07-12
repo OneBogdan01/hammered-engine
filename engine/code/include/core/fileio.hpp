@@ -15,6 +15,18 @@ void RestartApplication();
 gfx::GRAPHICS_API LoadGraphicsAPIFromConfig();
 gfx::GRAPHICS_API LoadCurrentGraphicsAPI();
 
+#ifdef GAME_GL_EXECUTABLE_NAME
+inline constexpr std::string_view GlExe {GAME_GL_EXECUTABLE_NAME};
+#else
+inline constexpr std::string_view GlExe {};
+#endif
+
+#ifdef GAME_VK_EXECUTABLE_NAME
+inline constexpr std::string_view VkExe {GAME_VK_EXECUTABLE_NAME};
+#else
+inline constexpr std::string_view VkExe {};
+#endif
+
 constexpr std::string_view AssetPath {"assets/"};
 } // namespace io
 } // namespace hm
