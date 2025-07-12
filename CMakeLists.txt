@@ -101,12 +101,20 @@ add_custom_target(build_opengl
                               --target game_gl
     COMMENT "Build the OpenGL backend executable (game_gl)"
 )
+# Convenience target to build every enabled backend in one go.
+add_custom_target(build_all_backends ALL)
+foreach(backend ${GAME_BACKENDS})
+    add_dependencies(build_all_backends game_${backend})
+endforeach()
 
+set_target_properties(build_vulkan PROPERTIES FOLDER "utilities")
+set_target_properties(build_opengl PROPERTIES FOLDER "utilities")
+set_target_properties(build_all_backends PROPERTIES FOLDER "utilities")
 # Set the Visual Studio startup project to the first enabled backend executable
 list(GET GAME_BACKENDS 0 FIRST_BACKEND)
 
 set(STARTUP_PROJECT "game_${FIRST_BACKEND}")
 
 message(STATUS "Setting VS startup project to ${STARTUP_PROJECT}")
-
+set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${STARTUP_PROJECT})
 
