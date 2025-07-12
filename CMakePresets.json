@@ -10,9 +10,22 @@
       "cacheVariables": {
         "CMAKE_CONFIGURATION_TYPES": "Debug",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-        "CMAKE_BUILD_TYPE": "Debug",
         "CMAKE_CXX_FLAGS_DEBUG": "/Zi /MTd /Od /Ob0 /DDEBUG",
         "CMAKE_CXX_FLAGS": "/W4 /WX /EHsc"
+      }
+    },
+    {
+      "name": "windows-clang-ninja-debug",
+      "displayName": "Windows Clang Ninja Debug",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_CXX_FLAGS_DEBUG": "-g -O0 -DDEBUG -Wall -Wextra -Werror",
+        "CMAKE_CXX_FLAGS": ""
       }
     },
     {
@@ -24,7 +37,6 @@
       "cacheVariables": {
         "CMAKE_CONFIGURATION_TYPES": "RelWithDebInfo",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
         "CMAKE_CXX_FLAGS_RELWITHDEBINFO": "/O2 /Zi /MT /DDEVELOP",
         "CMAKE_CXX_FLAGS": "/W4 /WX /EHsc"
       }
@@ -38,7 +50,6 @@
       "cacheVariables": {
         "CMAKE_CONFIGURATION_TYPES": "Release",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-        "CMAKE_BUILD_TYPE": "Release",
         "CMAKE_CXX_FLAGS_RELEASE": "/O2 /MT /DNDEBUG",
         "CMAKE_CXX_FLAGS": "/W4 /WX /EHsc"
       }
@@ -46,7 +57,7 @@
     {
       "name": "linux-clang-debug",
       "displayName": "Linux Clang Debug",
-      "generator": "Unix Makefiles",
+      "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/${presetName}",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
@@ -59,7 +70,7 @@
     {
       "name": "linux-clang-develop",
       "displayName": "Linux Clang Develop",
-      "generator": "Unix Makefiles",
+      "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/${presetName}",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "RelWithDebInfo",
@@ -72,7 +83,7 @@
     {
       "name": "linux-clang-release",
       "displayName": "Linux Clang Release",
-      "generator": "Unix Makefiles",
+      "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/${presetName}",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
@@ -88,6 +99,10 @@
     {
       "name": "windows-msvc-debug",
       "configurePreset": "windows-msvc-debug"
+    },
+   {
+      "name": "windows-msvc-ninja-debug",
+      "configurePreset": "windows-msvc-ninja-debug"
     },
     {
       "name": "windows-msvc-develop",
