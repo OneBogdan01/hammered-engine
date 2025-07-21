@@ -5,13 +5,12 @@ find_package(OpenGL REQUIRED)
 # Header-only libraries
 add_library(vma INTERFACE)
 target_include_directories(vma INTERFACE vma)
+
 add_library(glm INTERFACE)
 target_include_directories(glm INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/glm)
-set_target_properties(glm PROPERTIES FOLDER "engine/external")
 
 add_library(stb_image INTERFACE)
 target_include_directories(stb_image INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/stb_image)
-set_target_properties(stb_image PROPERTIES FOLDER "engine/external")
 
 # vkbootstrap
 add_library(vkbootstrap STATIC)
@@ -38,7 +37,7 @@ endforeach()
 
 
 # fmt
-add_subdirectory(fmt EXCLUDE_FROM_ALL)
+add_subdirectory(fmt)
 set_target_properties(fmt PROPERTIES FOLDER "engine/external")
 
 # glad

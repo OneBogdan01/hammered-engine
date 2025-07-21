@@ -56,6 +56,7 @@ function(add_game_backends backends)
         set(target "game_${backend}")
         set(engine "hammered_engine_${backend}")
 
+        #TODO expand this for scripting, or structuring the game application
         add_executable(${target} game/src/main.cpp)
         target_link_libraries(${target} PRIVATE ${engine})
         add_dependencies(${engine} shaders)
@@ -72,7 +73,7 @@ function(add_game_backends backends)
 
     # Compiler flags
     if(MSVC)
-        set(CMAKE_CXX_FLAGS "/W4 /WX /EHsc")          # common flags for all configs
+        set(CMAKE_CXX_FLAGS "/W4 /WX /EHsc") 
         set(CMAKE_CXX_FLAGS_DEBUG "/Zi /MTd /Od /Ob0 /DDEBUG")
         set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "/O2 /Zi /DDEVELOP /MT")
         set(CMAKE_CXX_FLAGS_RELEASE "/O2 /DNDEBUG /MT")

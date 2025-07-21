@@ -50,10 +50,9 @@ foreach(backend ${GAME_BACKENDS})
     target_compile_features(${target_name} PUBLIC cxx_std_20)
     target_compile_definitions(${target_name} PUBLIC ${PLATFORM_DEFINE})
 
-    # Engine asset directory variable for reuse
-    set(ENGINE_ASSET_SOURCE_DIR "${CMAKE_CURRENT_LIST_DIR}/../assets" PARENT_SCOPE)
 
-    # Visual Studio folders
+
+    # Visual Studio organization
     source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/source PREFIX "source" FILES ${ENGINE_SOURCES})
     source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/include PREFIX "include" FILES ${ENGINE_HEADERS})
 

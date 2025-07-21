@@ -2,26 +2,7 @@
 # Add dependencies
 add_subdirectory(external)
 add_subdirectory(code)
-# common dependencies
-set(COMMON_EXTERNALS
-    glm
-    stb_image
-    fmt::fmt
-    SDL3::SDL3
-    imgui_core
-)
 
-# backend-specific externals
-set(OPENGL_EXTERNALS
-    glad
-    imgui_opengl
-)
-
-set(VULKAN_EXTERNALS
-    vkbootstrap
-    vma
-    imgui_vulkan
-)
 foreach(backend ${GAME_BACKENDS})
     set(engine_target "hammered_engine_${backend}")
 
