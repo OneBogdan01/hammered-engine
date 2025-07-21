@@ -55,8 +55,8 @@ void Device::Initialize()
     log::Error("Failed to initialize GLAD");
     return;
   }
-  log::Info("OpenGL Version: {}",
-            reinterpret_cast<const char*>(glGetString(GL_VERSION)));
+  log::Info("GPU used: {}",
+            reinterpret_cast<const char*>(glGetString(GL_RENDERER)));
 
 #ifdef DEBUG
 

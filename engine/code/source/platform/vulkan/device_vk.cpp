@@ -430,11 +430,11 @@ void internal::init_triangle_pipeline()
           io::GetPath("shaders/colored_triangle.frag.vk.spv").c_str(), _device,
           &triangleFragShader))
   {
-    fmt::print("Error when building the triangle fragment shader module");
+    log::Error("Error when building the triangle fragment shader module");
   }
   else
   {
-    fmt::print("Triangle fragment shader succesfully loaded");
+    log::Info("Triangle fragment shader succesfully loaded");
   }
 
   VkShaderModule triangleVertexShader;
@@ -442,11 +442,11 @@ void internal::init_triangle_pipeline()
           io::GetPath("shaders/colored_triangle.vert.vk.spv").c_str(), _device,
           &triangleVertexShader))
   {
-    fmt::print("Error when building the triangle vertex shader module");
+    log::Error("Error when building the triangle vertex shader module");
   }
   else
   {
-    fmt::print("Triangle vertex shader succesfully loaded");
+    log::Info("Triangle vertex shader succesfully loaded");
   }
 
   // build the pipeline layout that controls the inputs/outputs of the shader
@@ -522,14 +522,14 @@ void internal::init_background_pipelines()
           io::GetPath("shaders/gradient_color.comp.vk.spv").c_str(), _device,
           &gradientShader))
   {
-    fmt::print("Error when building the compute shader \n");
+    log::Error("Error when building the compute shader \n");
   }
 
   VkShaderModule skyShader;
   if (!vkutil::load_shader_module(
           io::GetPath("shaders/sky.comp.vk.spv").c_str(), _device, &skyShader))
   {
-    fmt::print("Error when building the compute shader \n");
+    log::Error("Error when building the compute shader \n");
   }
 
   VkPipelineShaderStageCreateInfo stageinfo {};
@@ -690,6 +690,15 @@ void internal::init_vulkan()
 
   vkb::Device vkbDevice = deviceBuilder.build().value();
 
+  if (vkbDevice && vkbDevice.physical_device)
+  {
+    log::Info("GPU used: {}", vkbDevice.physical_device.name);
+  }
+
+  if (_debug_messenger)
+  {
+    log::Info("Vulkan debug output enabled.");
+  }
   // Get the VkDevice handle used in the rest of a vulkan application
   _device = vkbDevice.device;
   _chosenGPU = physicalDevice.physical_device;
