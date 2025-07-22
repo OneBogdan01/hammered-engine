@@ -1,5 +1,3 @@
-# OpenGL and Vulkan specific
-
 find_program(GLSL_VALIDATOR glslangValidator HINTS /usr/bin /usr/local/bin $ENV{VULKAN_SDK}/Bin/ $ENV{VULKAN_SDK}/Bin32/)
 
 file(GLOB_RECURSE GLSL_SOURCE_FILES
@@ -9,15 +7,13 @@ file(GLOB_RECURSE GLSL_SOURCE_FILES
     "${ASSET_SOURCE_DIR}/shaders/*.tesc"
     "${ASSET_SOURCE_DIR}/shaders/*.tese"
     "${ASSET_SOURCE_DIR}/shaders/*.geom"
-
-
-
     )
 
 # Generate Vulkan and OpenGL SPIR-V for each shader
 foreach(GLSL ${GLSL_SOURCE_FILES})
     get_filename_component(FILE_NAME ${GLSL} NAME)
 
+if(ENABLE_VK_BACKEND)
     # Vulkan SPIR-V
     set(SPIRV_VK "${ASSET_SOURCE_DIR}/shaders/${FILE_NAME}.vk.spv")
     add_custom_command(
@@ -27,7 +23,8 @@ foreach(GLSL ${GLSL_SOURCE_FILES})
         COMMENT "Compiling Vulkan SPIR-V: ${FILE_NAME} -> ${SPIRV_VK}"
     )
     list(APPEND SPIRV_BINARY_FILES ${SPIRV_VK})
-
+endif()
+if(ENABLE_GL_BACKEND)
     # OpenGL SPIR-V
     set(SPIRV_GL "${ASSET_SOURCE_DIR}/shaders/${FILE_NAME}.gl.spv")
     add_custom_command(
@@ -37,6 +34,7 @@ foreach(GLSL ${GLSL_SOURCE_FILES})
         COMMENT "Compiling OpenGL SPIR-V: ${FILE_NAME} -> ${SPIRV_GL}"
     )
     list(APPEND SPIRV_BINARY_FILES ${SPIRV_GL})
+endif()
 
 endforeach()
 

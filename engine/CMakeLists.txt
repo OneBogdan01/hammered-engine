@@ -1,32 +1,8 @@
-cmake_minimum_required(VERSION 3.16)
-
-# Set project version
-project(hammered_engine VERSION 1.0.0 LANGUAGES CXX)
-
 
 # Add dependencies
 add_subdirectory(external)
 add_subdirectory(code)
-# common dependencies
-set(COMMON_EXTERNALS
-    glm
-    stb_image
-    fmt::fmt
-    SDL3::SDL3
-    imgui_core
-)
 
-# backend-specific externals
-set(OPENGL_EXTERNALS
-    glad
-    imgui_opengl
-)
-
-set(VULKAN_EXTERNALS
-    vkbootstrap
-    vma
-    imgui_vulkan
-)
 foreach(backend ${GAME_BACKENDS})
     set(engine_target "hammered_engine_${backend}")
 
@@ -58,8 +34,3 @@ foreach(backend ${GAME_BACKENDS})
     # Set Visual Studio folder
     set_target_properties(${engine_target} PROPERTIES FOLDER "engine")
 endforeach()
-
-# Enable multi-threaded compile
-if(MSVC)
-    add_compile_options(/MP)
-endif()

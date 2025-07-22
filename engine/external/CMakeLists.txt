@@ -5,13 +5,12 @@ find_package(OpenGL REQUIRED)
 # Header-only libraries
 add_library(vma INTERFACE)
 target_include_directories(vma INTERFACE vma)
+
 add_library(glm INTERFACE)
 target_include_directories(glm INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/glm)
-set_target_properties(glm PROPERTIES FOLDER "engine/external")
 
 add_library(stb_image INTERFACE)
 target_include_directories(stb_image INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/stb_image)
-set_target_properties(stb_image PROPERTIES FOLDER "engine/external")
 
 # vkbootstrap
 add_library(vkbootstrap STATIC)
@@ -38,7 +37,7 @@ endforeach()
 
 
 # fmt
-add_subdirectory(fmt EXCLUDE_FROM_ALL)
+add_subdirectory(fmt)
 set_target_properties(fmt PROPERTIES FOLDER "engine/external")
 
 # glad
@@ -63,34 +62,47 @@ target_link_libraries(imgui_core PUBLIC SDL3::SDL3)
 set_target_properties(imgui_core PROPERTIES FOLDER "engine/external")
 
 # Vulkan variant
-add_library(imgui_vulkan STATIC
-    imgui/backends/imgui_impl_vulkan.cpp
-)
-target_link_libraries(imgui_vulkan PUBLIC imgui_core Vulkan::Vulkan)
-set_target_properties(imgui_vulkan PROPERTIES FOLDER "engine/external")
+if(ENABLE_VK_BACKEND) 
+    add_library(imgui_vulkan STATIC
+        imgui/backends/imgui_impl_vulkan.cpp
+    )
+    target_link_libraries(imgui_vulkan PUBLIC imgui_core Vulkan::Vulkan)
+    set_target_properties(imgui_vulkan PROPERTIES FOLDER "engine/external")
+endif()
 
 # OpenGL variant
-add_library(imgui_opengl STATIC
-    imgui/backends/imgui_impl_opengl3.cpp
-)
-target_link_libraries(imgui_opengl PUBLIC imgui_core OpenGL::GL)
-set_target_properties(imgui_opengl PROPERTIES FOLDER "engine/external")
-
+if(ENABLE_GL_BACKEND) 
+    add_library(imgui_opengl STATIC
+        imgui/backends/imgui_impl_opengl3.cpp
+    )
+    target_link_libraries(imgui_opengl PUBLIC imgui_core OpenGL::GL)
+    set_target_properties(imgui_opengl PROPERTIES FOLDER "engine/external")
+endif()
 if(MSVC)
     target_compile_options(glm INTERFACE /W0)
     target_compile_options(stb_image INTERFACE /W0)
-    target_compile_options(vkbootstrap PRIVATE /W0)
-    target_compile_options(glad PRIVATE /W0)
     target_compile_options(imgui_core PRIVATE /W0)
+if (ENABLE_VK_BACKEND)
+    target_compile_options(vkbootstrap PRIVATE /W0)
     target_compile_options(imgui_vulkan PRIVATE /W0)
+endif()
+if (ENABLE_GL_BACKEND)
     target_compile_options(imgui_opengl PRIVATE /W0)
+    target_compile_options(glad PRIVATE /W0)
+endif()
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|Intel")
     target_compile_options(glm INTERFACE -w)
     target_compile_options(stb_image INTERFACE -w)
-    target_compile_options(vkbootstrap PRIVATE -w)
-    target_compile_options(glad PRIVATE -w)
     target_compile_options(imgui_core PRIVATE -w)
-    target_compile_options(imgui_vulkan PRIVATE -w)
+
+if (ENABLE_GL_BACKEND)
+    target_compile_options(glad PRIVATE -w)
     target_compile_options(imgui_opengl PRIVATE -w)
+endif()
+if (ENABLE_VK_BACKEND)
+    target_compile_options(imgui_vulkan PRIVATE -w)
+    target_compile_options(vkbootstrap PRIVATE -w)
+endif()
+
 endif()
 
