@@ -4,7 +4,6 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 ## Multithreaded
 if(MSVC)
     add_compile_options(/MP)
-    add_compile_options(/FS)
 endif(MSVC)
 
 
