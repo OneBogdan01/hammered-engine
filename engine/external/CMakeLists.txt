@@ -8,12 +8,12 @@ project(third_party LANGUAGES C CXX)
 find_package(Vulkan)
 find_package(OpenGL)
 
-if(!Vulkan_FOUND)
-# add Vulkan if it is not found
-add_library(Vulkan INTERFACE)
-set(VULKAN_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Vulkan-Headers/include)
-target_sources(vulkan INTERFACE ${VULKAN_INCLUDE_DIR}/Vulkan-Headers/vulkan.h)
-target_include_directories(vulkan SYSTEM INTERFACE ${VULKAN_INCLUDE_DIR})
+if(NOT Vulkan_FOUND)
+    add_library(Vulkan::Vulkan INTERFACE IMPORTED GLOBAL)
+    set(VULKAN_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Vulkan-Headers/include)
+    set_target_properties(Vulkan::Vulkan PROPERTIES
+        INTERFACE_INCLUDE_DIRECTORIES "${VULKAN_INCLUDE_DIR}"
+    )
 endif()
 
 # Header-only libraries
