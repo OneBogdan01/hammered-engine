@@ -4,12 +4,9 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 ## Multithreaded
 if(MSVC)
     add_compile_options(/MP)
+    add_compile_options(/FS)
 endif(MSVC)
-if(MSVC AND CMAKE_GENERATOR STREQUAL "Ninja")
-    # Apply /FS globally to prevent .pdb write conflicts
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /FS" CACHE STRING "" FORCE)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /FS" CACHE STRING "" FORCE)
-endif()
+
 
 ## Versioning
 set( HM_VERSION_MAJOR 0 )
