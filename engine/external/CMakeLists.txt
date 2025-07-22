@@ -2,17 +2,20 @@ cmake_minimum_required(VERSION 3.10)
 
 project(third_party LANGUAGES C CXX)
 
-# vulkan
-add_library(vulkan INTERFACE)
-set(VULKAN_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/vulkan/include)
-target_sources(vulkan INTERFACE ${VULKAN_INCLUDE_DIR}/vulkan/vulkan.h)
-target_include_directories(vulkan SYSTEM INTERFACE ${VULKAN_INCLUDE_DIR})
 
-target_compile_definitions(vulkan INTERFACE VK_NO_PROTOTYPES)
 
 # Required system packages
 find_package(Vulkan)
 find_package(OpenGL)
+
+if(!Vulkan_FOUND)
+# add Vulkan if it is not found
+find_package(VulkanHeaders REQUIRED CONFIG)
+
+target_link_libraries(foobar PRIVATE Vulkan::Headers)
+
+message(STATUS "Vulkan Headers Version: ${VulkanHeaders_VERSION}")
+endif()
 
 # Header-only libraries
 add_library(vma INTERFACE)
