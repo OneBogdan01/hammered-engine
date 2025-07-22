@@ -10,11 +10,10 @@ find_package(OpenGL)
 
 if(!Vulkan_FOUND)
 # add Vulkan if it is not found
-find_package(VulkanHeaders REQUIRED CONFIG)
-
-target_link_libraries(foobar PRIVATE Vulkan::Headers)
-
-message(STATUS "Vulkan Headers Version: ${VulkanHeaders_VERSION}")
+add_library(Vulkan INTERFACE)
+set(VULKAN_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Vulkan-Headers/include)
+target_sources(vulkan INTERFACE ${VULKAN_INCLUDE_DIR}/Vulkan-Headers/vulkan.h)
+target_include_directories(vulkan SYSTEM INTERFACE ${VULKAN_INCLUDE_DIR})
 endif()
 
 # Header-only libraries
