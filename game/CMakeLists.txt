@@ -1,5 +1,7 @@
 find_program(GLSL_VALIDATOR glslangValidator HINTS /usr/bin /usr/local/bin $ENV{VULKAN_SDK}/Bin/ $ENV{VULKAN_SDK}/Bin32/)
 
+if(GLSL_VALIDATOR)
+    message(STATUS "Found glslangValidator: ${GLSL_VALIDATOR}")
 file(GLOB_RECURSE GLSL_SOURCE_FILES
     "${ASSET_SOURCE_DIR}/shaders/*.frag"
     "${ASSET_SOURCE_DIR}/shaders/*.vert"
@@ -43,3 +45,7 @@ add_custom_target(
     DEPENDS ${SPIRV_BINARY_FILES}
 )
 set_target_properties(shaders PROPERTIES FOLDER "utilities")
+
+else()
+  message(STATUS "glslangValidator was not found!)
+endif()
