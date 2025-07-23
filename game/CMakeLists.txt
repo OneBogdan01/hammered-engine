@@ -40,12 +40,14 @@ endif()
 
 endforeach()
 
+
+
+else()
+  message(STATUS "glslangValidator was not found!")
+endif()
+
 add_custom_target(
     shaders
     DEPENDS ${SPIRV_BINARY_FILES}
 )
 set_target_properties(shaders PROPERTIES FOLDER "utilities")
-
-else()
-  message(STATUS "glslangValidator was not found!")
-endif()
