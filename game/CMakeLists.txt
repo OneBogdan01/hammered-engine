@@ -47,5 +47,5 @@ add_custom_target(
 set_target_properties(shaders PROPERTIES FOLDER "utilities")
 
 else()
-  message(STATUS "glslangValidator was not found!)
+  message(STATUS "glslangValidator was not found!")
 endif()
