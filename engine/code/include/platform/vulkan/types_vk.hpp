@@ -1,13 +1,9 @@
 ﻿#pragma once
 
-#include <fmt/core.h>
+#include <fmt/format.h>
 #include <vk_mem_alloc.h>
-#ifdef _WIN32
-#include <vulkan/vk_enum_string_helper.h>
-#endif
 
 #include <vulkan/vulkan.h>
-
 #include <array>
 #include <deque>
 #include <functional>
@@ -18,56 +14,69 @@
 #include <span>
 #include <string>
 #include <vector>
+#include <cstdio>
+#include <map>
+#include <sstream>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
-// Fallback made by AI, TODO verify it
-#ifndef _WIN32
-inline const char* string_VkResult(VkResult result)
+#include <vk_mem_alloc.h>
+/**
+ * @brief Helper function to convert a data type
+ *        to string using output stream operator.
+ * @param value The object to be converted to string
+ * @return String version of the given object
+ */
+template<class T>
+inline std::string to_string(const T &value)
 {
+  std::stringstream ss;
+  ss << std::fixed << value;
+  return ss.str();
+}
+
+// https://github.com/KhronosGroup/Vulkan-Samples/blob/main/framework/common/vk_common.cpp#L27
+inline std::ostream &operator<<(std::ostream &os, const VkResult result)
+{
+#define WRITE_VK_ENUM(r) \
+  case VK_##r:           \
+    os << #r;            \
+    break;
+
   switch (result)
   {
-    case VK_SUCCESS:
-      return "VK_SUCCESS";
-    case VK_NOT_READY:
-      return "VK_NOT_READY";
-    case VK_TIMEOUT:
-      return "VK_TIMEOUT";
-    case VK_EVENT_SET:
-      return "VK_EVENT_SET";
-    case VK_EVENT_RESET:
-      return "VK_EVENT_RESET";
-    case VK_INCOMPLETE:
-      return "VK_INCOMPLETE";
-    case VK_ERROR_OUT_OF_HOST_MEMORY:
-      return "VK_ERROR_OUT_OF_HOST_MEMORY";
-    case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-      return "VK_ERROR_OUT_OF_DEVICE_MEMORY";
-    case VK_ERROR_INITIALIZATION_FAILED:
-      return "VK_ERROR_INITIALIZATION_FAILED";
-    case VK_ERROR_DEVICE_LOST:
-      return "VK_ERROR_DEVICE_LOST";
-    case VK_ERROR_MEMORY_MAP_FAILED:
-      return "VK_ERROR_MEMORY_MAP_FAILED";
-    case VK_ERROR_LAYER_NOT_PRESENT:
-      return "VK_ERROR_LAYER_NOT_PRESENT";
-    case VK_ERROR_EXTENSION_NOT_PRESENT:
-      return "VK_ERROR_EXTENSION_NOT_PRESENT";
-    case VK_ERROR_FEATURE_NOT_PRESENT:
-      return "VK_ERROR_FEATURE_NOT_PRESENT";
-    case VK_ERROR_INCOMPATIBLE_DRIVER:
-      return "VK_ERROR_INCOMPATIBLE_DRIVER";
-    case VK_ERROR_TOO_MANY_OBJECTS:
-      return "VK_ERROR_TOO_MANY_OBJECTS";
-    case VK_ERROR_FORMAT_NOT_SUPPORTED:
-      return "VK_ERROR_FORMAT_NOT_SUPPORTED";
-    case VK_ERROR_FRAGMENTED_POOL:
-      return "VK_ERROR_FRAGMENTED_POOL";
-    case VK_ERROR_UNKNOWN:
-      return "VK_ERROR_UNKNOWN";
+    WRITE_VK_ENUM(NOT_READY);
+    WRITE_VK_ENUM(TIMEOUT);
+    WRITE_VK_ENUM(EVENT_SET);
+    WRITE_VK_ENUM(EVENT_RESET);
+    WRITE_VK_ENUM(INCOMPLETE);
+    WRITE_VK_ENUM(ERROR_OUT_OF_HOST_MEMORY);
+    WRITE_VK_ENUM(ERROR_OUT_OF_DEVICE_MEMORY);
+    WRITE_VK_ENUM(ERROR_INITIALIZATION_FAILED);
+    WRITE_VK_ENUM(ERROR_DEVICE_LOST);
+    WRITE_VK_ENUM(ERROR_MEMORY_MAP_FAILED);
+    WRITE_VK_ENUM(ERROR_LAYER_NOT_PRESENT);
+    WRITE_VK_ENUM(ERROR_EXTENSION_NOT_PRESENT);
+    WRITE_VK_ENUM(ERROR_FEATURE_NOT_PRESENT);
+    WRITE_VK_ENUM(ERROR_INCOMPATIBLE_DRIVER);
+    WRITE_VK_ENUM(ERROR_TOO_MANY_OBJECTS);
+    WRITE_VK_ENUM(ERROR_FORMAT_NOT_SUPPORTED);
+    WRITE_VK_ENUM(ERROR_SURFACE_LOST_KHR);
+    WRITE_VK_ENUM(ERROR_NATIVE_WINDOW_IN_USE_KHR);
+    WRITE_VK_ENUM(SUBOPTIMAL_KHR);
+    WRITE_VK_ENUM(ERROR_OUT_OF_DATE_KHR);
+    WRITE_VK_ENUM(ERROR_INCOMPATIBLE_DISPLAY_KHR);
+    WRITE_VK_ENUM(ERROR_VALIDATION_FAILED_EXT);
+    WRITE_VK_ENUM(ERROR_INVALID_SHADER_NV);
     default:
-      return "Unknown VkResult";
+      os << "UNKNOWN_ERROR";
   }
+
+#undef WRITE_VK_ENUM
+
+  return os;
 }
-#endif
 
 struct AllocatedImage
 {
@@ -78,14 +87,12 @@ struct AllocatedImage
   VkFormat imageFormat;
 };
 
-#define VK_CHECK(x)                                                          \
-  do                                                                         \
-  {                                                                          \
-    VkResult err = x;                                                        \
-    if (err)                                                                 \
-    {                                                                        \
-      fmt::println("Vulkan error at {}:{} - {}: {}", __FILE__, __LINE__, #x, \
-                   string_VkResult(err));                                    \
-      abort();                                                               \
-    }                                                                        \
+#define VK_CHECK(x)                                                         \
+  do                                                                        \
+  {                                                                         \
+    VkResult err = x;                                                       \
+    if (err)                                                                \
+    {                                                                       \
+      throw std::runtime_error("Detected Vulkan error: " + to_string(err)); \
+    }                                                                       \
   } while (0)
