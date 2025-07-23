@@ -1,6 +1,7 @@
 # Configuring some global settings
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+set(VKB_WSI_SELECTION "XCB" CACHE STRING "Select WSI target (XCB, XLIB, WAYLAND, D2D)")
 ## Multithreaded
 if(MSVC)
     add_compile_options(/MP)
