@@ -1,6 +1,6 @@
 
 #pragma once
-#include <vulkan/vulkan.h>
+#include "types_vk.hpp"
 namespace vkutil
 {
 

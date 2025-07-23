@@ -26,9 +26,11 @@ foreach(backend ${GAME_BACKENDS})
     elseif(backend STREQUAL "vk")
         target_link_libraries(${engine_target}
             PUBLIC
+                volk
                 vkbootstrap
                 vma
                 imgui_vulkan
+                
         )
     endif()
     # Set Visual Studio folder

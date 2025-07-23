@@ -1,20 +1,74 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(third_party LANGUAGES C CXX)
+project(external LANGUAGES C CXX)
 
 
 
-# Required system packages
+# System packages
 find_package(Vulkan)
 find_package(OpenGL)
 
-if(NOT Vulkan_FOUND)
-    add_library(Vulkan::Vulkan INTERFACE IMPORTED GLOBAL)
-    set(VULKAN_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Vulkan-Headers/include)
-    set_target_properties(Vulkan::Vulkan PROPERTIES
-        INTERFACE_INCLUDE_DIRECTORIES "${VULKAN_INCLUDE_DIR}"
-    )
+# vulkan
+add_library(vulkan INTERFACE)
+set(VULKAN_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Vulkan-Headers/include)
+target_sources(vulkan INTERFACE ${VULKAN_INCLUDE_DIR}/vulkan/vulkan.h)
+target_include_directories(vulkan SYSTEM INTERFACE ${VULKAN_INCLUDE_DIR})
+target_include_directories(vulkan SYSTEM INTERFACE ${VULKAN_INCLUDE_DIR}/vulkan)
+target_compile_definitions(vulkan INTERFACE VK_NO_PROTOTYPES)
+
+if(WIN32)
+    target_compile_definitions(vulkan INTERFACE VK_USE_PLATFORM_WIN32_KHR)
+elseif(UNIX)
+    # Choose WSI based on VKB_WSI_SELECTION
+    if (VKB_WSI_SELECTION STREQUAL XCB OR VKB_WSI_SELECTION STREQUAL XLIB OR VKB_WSI_SELECTION STREQUAL WAYLAND)
+        find_package(PkgConfig REQUIRED)
+    endif()
+    if (VKB_WSI_SELECTION STREQUAL XCB)
+        pkg_check_modules(XCB xcb REQUIRED)
+        if (XCB_FOUND)
+            target_compile_definitions(vulkan INTERFACE VK_USE_PLATFORM_XCB_KHR)
+        endif()
+    elseif (VKB_WSI_SELECTION STREQUAL XLIB)
+        pkg_check_modules(X11 x11 REQUIRED)
+        if (X11_FOUND)
+            target_compile_definitions(vulkan INTERFACE VK_USE_PLATFORM_XLIB_KHR)
+        endif()
+    elseif (VKB_WSI_SELECTION STREQUAL WAYLAND)
+        pkg_check_modules(WAYLAND wayland-client REQUIRED)
+        if (WAYLAND_FOUND)
+            target_compile_definitions(vulkan INTERFACE VK_USE_PLATFORM_WAYLAND_KHR)
+        endif()
+    elseif (VKB_WSI_SELECTION STREQUAL D2D)
+        set(DIRECT_TO_DISPLAY TRUE)
+        set(DIRECT_TO_DISPLAY TRUE PARENT_SCOPE)
+        target_compile_definitions(vulkan INTERFACE VK_USE_PLATFORM_DISPLAY_KHR)
+    else()
+        message(FATAL_ERROR "Unknown WSI")
+    endif()
 endif()
+
+
+# volk
+set(VOLK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/volk")
+set(VOLK_FILES
+    "${VOLK_DIR}/volk.c"
+    "${VOLK_DIR}/volk.h")
+
+add_library(volk STATIC ${VOLK_FILES})
+set_target_properties(volk PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
+target_link_libraries(volk PUBLIC vulkan)
+
+target_include_directories(volk SYSTEM PUBLIC ${VOLK_DIR})
+
+if (VKB_WSI_SELECTION STREQUAL XCB)
+    target_include_directories(volk SYSTEM PUBLIC ${XCB_INCLUDE_DIRS})
+elseif (VKB_WSI_SELECTION STREQUAL XLIB)
+    target_include_directories(volk SYSTEM PUBLIC ${X11_INCLUDE_DIRS})
+elseif (VKB_WSI_SELECTION STREQUAL WAYLAND)
+    target_include_directories(volk SYSTEM PUBLIC ${WAYLAND_INCLUDE_DIRS})
+endif()
+set_property(TARGET volk PROPERTY FOLDER "engine/external")
 
 # Header-only libraries
 add_library(vma INTERFACE)
@@ -35,7 +89,7 @@ target_sources(vkbootstrap PRIVATE
   )
 
 target_include_directories(vkbootstrap PUBLIC vkbootstrap)
-target_link_libraries(vkbootstrap PUBLIC Vulkan::Vulkan $<$<BOOL:UNIX>:${CMAKE_DL_LIBS}>)
+target_link_libraries(vkbootstrap PUBLIC volk $<$<BOOL:UNIX>:${CMAKE_DL_LIBS}>)
 set_property(TARGET vkbootstrap PROPERTY CXX_STANDARD 20)
 set_target_properties(vkbootstrap PROPERTIES FOLDER "engine/external")
 
@@ -80,7 +134,7 @@ if(ENABLE_VK_BACKEND)
     add_library(imgui_vulkan STATIC
         imgui/backends/imgui_impl_vulkan.cpp
     )
-    target_link_libraries(imgui_vulkan PUBLIC imgui_core Vulkan::Vulkan)
+    target_link_libraries(imgui_vulkan PUBLIC imgui_core volk)
     set_target_properties(imgui_vulkan PROPERTIES FOLDER "engine/external")
 endif()
 

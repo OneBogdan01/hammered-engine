@@ -1,4 +1,6 @@
 ﻿#include "core/device.hpp"
+#define VOLK_IMPLEMENTATION
+#include <volk.h>
 #include "platform/vulkan/device_vk.hpp"
 
 #include <SDL3/SDL.h>
@@ -640,7 +642,7 @@ void internal::init_descriptors()
 void internal::init_vulkan()
 {
   // set the validation layers to false if not in debug
-#ifdef DEBUG
+#ifndef _DEBUG
   bUseValidationLayers = false;
 #endif
 
@@ -655,6 +657,8 @@ void internal::init_vulkan()
 
   vkb::Instance vkb_inst = inst_ret.value();
 
+  volkInitialize();
+  volkLoadInstance(vkb_inst);
   // grab the instance
   _instance = vkb_inst.instance;
   _debug_messenger = vkb_inst.debug_messenger;
@@ -701,6 +705,9 @@ void internal::init_vulkan()
   }
   // Get the VkDevice handle used in the rest of a vulkan application
   _device = vkbDevice.device;
+
+  volkLoadDevice(_device);
+
   _chosenGPU = physicalDevice.physical_device;
 
   // use vkbootstrap to get a Graphics queue
@@ -714,6 +721,31 @@ void internal::init_vulkan()
   allocatorInfo.device = _device;
   allocatorInfo.instance = _instance;
   allocatorInfo.flags = VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT;
+
+  VmaVulkanFunctions vulkanFunctions = {};
+  vulkanFunctions.vkGetInstanceProcAddr = vkGetInstanceProcAddr;
+  vulkanFunctions.vkGetDeviceProcAddr = vkGetDeviceProcAddr;
+  vulkanFunctions.vkAllocateMemory = vkAllocateMemory;
+  vulkanFunctions.vkBindBufferMemory = vkBindBufferMemory;
+  vulkanFunctions.vkBindImageMemory = vkBindImageMemory;
+  vulkanFunctions.vkCreateBuffer = vkCreateBuffer;
+  vulkanFunctions.vkCreateImage = vkCreateImage;
+  vulkanFunctions.vkDestroyBuffer = vkDestroyBuffer;
+  vulkanFunctions.vkDestroyImage = vkDestroyImage;
+  vulkanFunctions.vkFlushMappedMemoryRanges = vkFlushMappedMemoryRanges;
+  vulkanFunctions.vkFreeMemory = vkFreeMemory;
+  vulkanFunctions.vkGetBufferMemoryRequirements = vkGetBufferMemoryRequirements;
+  vulkanFunctions.vkGetImageMemoryRequirements = vkGetImageMemoryRequirements;
+  vulkanFunctions.vkGetPhysicalDeviceMemoryProperties =
+      vkGetPhysicalDeviceMemoryProperties;
+  vulkanFunctions.vkGetPhysicalDeviceProperties = vkGetPhysicalDeviceProperties;
+  vulkanFunctions.vkInvalidateMappedMemoryRanges =
+      vkInvalidateMappedMemoryRanges;
+  vulkanFunctions.vkMapMemory = vkMapMemory;
+  vulkanFunctions.vkUnmapMemory = vkUnmapMemory;
+  vulkanFunctions.vkCmdCopyBuffer = vkCmdCopyBuffer;
+
+  allocatorInfo.pVulkanFunctions = &vulkanFunctions;
   vmaCreateAllocator(&allocatorInfo, &_allocator);
 
   _mainDeletionQueue.push_function(

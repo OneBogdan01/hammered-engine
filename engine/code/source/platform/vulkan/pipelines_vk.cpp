@@ -1,4 +1,6 @@
-﻿#include <platform/vulkan/pipelines_vk.hpp>
+﻿#include "volk.h"
+
+#include <platform/vulkan/pipelines_vk.hpp>
 using namespace vkutil;
 bool vkutil::load_shader_module(const char *filePath, VkDevice device,
                                 VkShaderModule *outShaderModule)

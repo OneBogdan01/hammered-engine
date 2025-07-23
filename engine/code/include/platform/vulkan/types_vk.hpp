@@ -3,7 +3,6 @@
 #include <fmt/format.h>
 #include <vk_mem_alloc.h>
 
-#include <vulkan/vulkan.h>
 #include <array>
 #include <deque>
 #include <functional>
@@ -21,7 +20,6 @@
 #include <unordered_map>
 #include <vector>
 
-#include <vk_mem_alloc.h>
 /**
  * @brief Helper function to convert a data type
  *        to string using output stream operator.
