@@ -32,9 +32,12 @@ jobs:
       - name: Configure and build
         shell: pwsh
         run: |
-          cmake -B build -G "Ninja" -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} 
-            -DENABLE_GL_BACKEND=ON 
-            -DENABLE_VK_BACKEND=ON
-            -DCMAKE_C_COMPILER_LAUNCHER=C:\\Users\\runneradmin\\.cargo\\bin\\sccache -DCMAKE_CXX_COMPILER_LAUNCHER=C:\\Users\\runneradmin\\.cargo\\bin\\sccache
+          cmake -B build -G "Ninja" `
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} `
+            -DENABLE_GL_BACKEND=ON `
+            -DENABLE_VK_BACKEND=ON `
+            -DCMAKE_C_COMPILER_LAUNCHER=C:\\Users\\runneradmin\\.cargo\\bin\\sccache `
+            -DCMAKE_CXX_COMPILER_LAUNCHER=C:\\Users\\runneradmin\\.cargo\\bin\\sccache
+
           cmake --build build --target game_gl --config ${{ matrix.build_type }} -j 1
           cmake --build build --target game_vk --config ${{ matrix.build_type }} -j 1
