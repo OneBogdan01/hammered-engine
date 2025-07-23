@@ -44,10 +44,10 @@ jobs:
       - if: ${{ matrix.platform == 'ubuntu' }}
         name: Configure and build
         run: |
-          cmake -B"build/${{ matrix.platform }}" `
-            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} `
-            -DENABLE_GL_BACKEND=ON `
-            -DENABLE_VK_BACKEND=ON 
+          cmake -B"build/${{ matrix.platform }}" \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+            -DENABLE_GL_BACKEND=ON \
+            -DENABLE_VK_BACKEND=ON
 
 
           cmake --build "build/${{ matrix.platform }}" --target game_gl --config ${{ matrix.build_type }}  ${{ env.PARALLEL }}
