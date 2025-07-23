@@ -8,3 +8,6 @@
 [submodule "engine/external/Vulkan-Headers"]
 	path = engine/external/Vulkan-Headers
 	url = https://github.com/KhronosGroup/Vulkan-Headers
+[submodule "engine/external/volk"]
+	path = engine/external/volk
+	url = https://github.com/zeux/volk.git
