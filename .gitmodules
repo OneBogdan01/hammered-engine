@@ -14,6 +14,5 @@
 [submodule "engine/external/tinygltf"]
 	path = engine/external/tinygltf
 	url = https://github.com/syoyo/tinygltf.git
-[submodule "engine/external/KTX-Software"]
-	path = engine/external/KTX-Software
-	url = https://github.com/KhronosGroup/KTX-Software.git
+
+
