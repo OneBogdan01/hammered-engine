@@ -23,6 +23,7 @@
 #include "backends/imgui_impl_sdl3.h"
 #include "backends/imgui_impl_vulkan.h"
 #include "core/fileio.hpp"
+#include "platform/vulkan/loader_vk.hpp"
 
 namespace hm::internal
 {
@@ -131,6 +132,9 @@ void Device::Initialize()
 
   // everything went fine
   _isInitialized = true;
+
+  // TODO move to a proper function
+  loadGltfMeshes(this, io::GetPath("models/basicmesh.glb"));
 }
 
 void Device::DestroyBackend()

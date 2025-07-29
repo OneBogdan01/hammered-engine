@@ -16,3 +16,6 @@
 	url = https://github.com/syoyo/tinygltf.git
 
 
+[submodule "engine/external/ktx"]
+	path = engine/external/ktx
+	url = https://github.com/KhronosGroup/KTX-Software.git
