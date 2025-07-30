@@ -25,6 +25,8 @@
 #include "core/fileio.hpp"
 #include "platform/vulkan/loader_vk.hpp"
 
+#include <glm/ext/matrix_transform.hpp>
+
 namespace hm::internal
 {
 
@@ -100,8 +102,7 @@ void init_mesh_pipeline();
 void create_swapchain(uint32_t width, uint32_t height);
 AllocatedBuffer CreateBuffer(size_t allocSize, VkBufferUsageFlags usage,
                              VmaMemoryUsage memoryUsage);
-GPUMeshBuffers UploadMesh(std::span<uint32_t> indicies,
-                          std::span<Vertex> vertices);
+
 void destroy_swapchain();
 void destroy_buffer(const AllocatedBuffer& buffer);
 // shuts down the engine
@@ -111,6 +112,8 @@ void draw_background(VkCommandBuffer cmd);
 void draw_geometry(VkCommandBuffer cmd);
 std::vector<ComputeEffect> backgroundEffects;
 int currentBackgroundEffect {0};
+// TODO move
+std::vector<std::shared_ptr<MeshAsset>> testMeshes;
 } // namespace hm::internal
 using namespace hm;
 using namespace hm::internal;
@@ -130,11 +133,11 @@ void Device::Initialize()
   init_default_data();
   InitImGui();
 
+  // TODO move to a proper function
+  testMeshes =
+      loadGltfMeshes(this, io::GetPath("models/basicmesh.glb")).value();
   // everything went fine
   _isInitialized = true;
-
-  // TODO move to a proper function
-  loadGltfMeshes(this, io::GetPath("models/basicmesh.glb"));
 }
 
 void Device::DestroyBackend()
@@ -452,6 +455,26 @@ void internal::draw_geometry(VkCommandBuffer cmd)
 
   vkCmdDrawIndexed(cmd, 6, 1, 0, 0, 0);
 
+  // model
+  push_constants.vertexBuffer = testMeshes[2]->meshBuffers.vertexBufferAddress;
+  glm::mat4 view = glm::translate(glm::vec3 {0, 0, -5});
+  // camera projection
+  glm::mat4 projection = glm::perspective(
+      glm::radians(70.f), (float)_drawExtent.width / (float)_drawExtent.height,
+      10000.f, 0.1f);
+
+  // invert the Y direction on projection matrix so that we are more similar
+  // to opengl and gltf axis
+  projection[1][1] *= -1;
+
+  push_constants.worldMatrix = projection * view;
+  vkCmdPushConstants(cmd, _meshPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0,
+                     sizeof(GPUDrawPushConstants), &push_constants);
+  vkCmdBindIndexBuffer(cmd, testMeshes[2]->meshBuffers.indexBuffer.buffer, 0,
+                       VK_INDEX_TYPE_UINT32);
+
+  vkCmdDrawIndexed(cmd, testMeshes[2]->surfaces[0].count, 1,
+                   testMeshes[2]->surfaces[0].startIndex, 0, 0);
   vkCmdEndRendering(cmd);
 }
 
@@ -1037,8 +1060,8 @@ AllocatedBuffer internal::CreateBuffer(size_t allocSize,
 
   return newBuffer;
 }
-GPUMeshBuffers internal::UploadMesh(std::span<uint32_t> indices,
-                                    std::span<Vertex> vertices)
+GPUMeshBuffers hm::UploadMesh(std::span<uint32_t> indices,
+                              std::span<Vertex> vertices)
 {
   const size_t vertexBufferSize = vertices.size() * sizeof(Vertex);
   const size_t indexBufferSize = indices.size() * sizeof(uint32_t);

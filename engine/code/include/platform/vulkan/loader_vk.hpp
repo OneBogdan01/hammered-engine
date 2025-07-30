@@ -22,7 +22,7 @@ struct MeshAsset
   GPUMeshBuffers meshBuffers;
 };
 std::optional<std::vector<std::shared_ptr<MeshAsset>>> loadGltfMeshes(
-    Device* engine, std::filesystem::path filePath);
+    Device* engine, const std::filesystem::path& filePath);
 // forward declaration
 
 } // namespace hm
