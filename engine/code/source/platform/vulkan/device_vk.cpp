@@ -1,4 +1,5 @@
 ﻿#include "core/device.hpp"
+
 #define VOLK_IMPLEMENTATION
 #include <volk.h>
 #include "platform/vulkan/device_vk.hpp"
@@ -25,8 +26,9 @@
 #include "core/fileio.hpp"
 #include "platform/vulkan/loader_vk.hpp"
 
-#include <glm/ext/matrix_clip_space.hpp>
+#include <glm/glm.hpp>
 #include <glm/ext/matrix_transform.hpp>
+#include <glm/ext/matrix_clip_space.hpp>
 
 namespace hm::internal
 {
@@ -443,8 +445,8 @@ void internal::draw_geometry(VkCommandBuffer cmd)
   viewport.y = 0;
   viewport.width = _drawExtent.width;
   viewport.height = _drawExtent.height;
-  viewport.minDepth = 1.f;
-  viewport.maxDepth = 0.f;
+  viewport.minDepth = 0.f;
+  viewport.maxDepth = 1.f;
 
   vkCmdSetViewport(cmd, 0, 1, &viewport);
 
