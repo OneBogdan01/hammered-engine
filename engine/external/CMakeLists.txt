@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.10)
 project(external LANGUAGES C CXX)
 
 
-
+# A lot of these are based on the Vulkan Samples Cmake https://github.com/KhronosGroup/Vulkan-Samples/blob/fb5c2f323a5e15880a21a18497110cfae5c301d3/third_party/CMakeLists.txt
 # System packages
 find_package(Vulkan)
 find_package(OpenGL)
@@ -74,9 +74,21 @@ set_property(TARGET volk PROPERTY FOLDER "engine/external")
 add_library(vma INTERFACE)
 target_include_directories(vma INTERFACE vma)
 
+# glm
 add_library(glm INTERFACE)
-target_include_directories(glm INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/glm)
+set(GLM_DIR ${CMAKE_CURRENT_SOURCE_DIR}/glm)
+target_sources(glm INTERFACE ${GLM_DIR}/glm/glm.hpp)
+target_include_directories(glm SYSTEM INTERFACE ${GLM_DIR})
 
+target_compile_definitions(glm INTERFACE
+    GLM_FORCE_SWIZZLE
+    GLM_FORCE_RADIANS
+    GLM_FORCE_CTOR_INIT
+    GLM_ENABLE_EXPERIMENTAL
+)
+if(NOT CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+    target_compile_definitions(glm INTERFACE GLM_FORCE_CXX14)
+endif()
 add_library(stb_image INTERFACE)
 target_include_directories(stb_image INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/stb_image)
 
