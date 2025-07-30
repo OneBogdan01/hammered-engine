@@ -6,12 +6,8 @@ layout(location = 0) out vec3 outColor;
 #define gl_VertexID gl_VertexIndex
 #endif
 
-#ifdef VULKAN
-layout(push_constant) uniform constants
-{
-    mat4 uViewProj;
-} PushConstants;
-#else
+#ifndef VULKAN
+
 layout(location = 0) uniform mat4 uViewProj;
 #endif
 
@@ -32,7 +28,6 @@ void main()
     mat4 viewProj = mat4(1.0);
 
 #ifdef VULKAN
-    viewProj = PushConstants.uViewProj;
     gl_Position = vec4(positions[gl_VertexID], 1.0);
 
 #else
