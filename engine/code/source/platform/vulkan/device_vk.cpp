@@ -443,8 +443,8 @@ void internal::draw_geometry(VkCommandBuffer cmd)
   viewport.y = 0;
   viewport.width = _drawExtent.width;
   viewport.height = _drawExtent.height;
-  viewport.minDepth = 0.f;
-  viewport.maxDepth = 1.f;
+  viewport.minDepth = 1.f;
+  viewport.maxDepth = 0.f;
 
   vkCmdSetViewport(cmd, 0, 1, &viewport);
 
@@ -1001,7 +1001,8 @@ void internal::init_mesh_pipeline()
   // filled triangles
   pipelineBuilder.set_polygon_mode(VK_POLYGON_MODE_FILL);
   // no backface culling
-  pipelineBuilder.set_cull_mode(VK_CULL_MODE_NONE, VK_FRONT_FACE_CLOCKWISE);
+  pipelineBuilder.set_cull_mode(VK_CULL_MODE_NONE,
+                                VK_FRONT_FACE_COUNTER_CLOCKWISE);
   // no multisampling
   pipelineBuilder.set_multisampling_none();
   // no blending
