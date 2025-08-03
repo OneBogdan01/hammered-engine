@@ -24,12 +24,14 @@
 #include "backends/imgui_impl_sdl3.h"
 #include "backends/imgui_impl_vulkan.h"
 #include "core/fileio.hpp"
+
 #include "platform/vulkan/loader_vk.hpp"
+#include "utility/console.hpp"
 
 #include <glm/glm.hpp>
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/ext/matrix_clip_space.hpp>
-
+#include <cmath>
 namespace hm::internal
 {
 
@@ -95,6 +97,7 @@ void init_swapchain();
 void init_commands();
 void init_sync_structures();
 void init_default_data();
+
 VkPipelineLayout _meshPipelineLayout;
 VkPipeline _meshPipeline;
 
@@ -120,12 +123,14 @@ AllocatedImage _depthImage;
 
 // TODO move
 std::vector<std::shared_ptr<MeshAsset>> testMeshes;
+
+float renderScale = .9f;
 } // namespace hm::internal
 using namespace hm;
 using namespace hm::internal;
 void Device::Initialize()
 {
-  SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_VULKAN);
+  SDL_WindowFlags window_flags = SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE;
 
   _windowExtent = {m_windowSize.x, m_windowSize.y};
   _window = SDL_CreateWindow(WindowTitle, _windowExtent.width,
@@ -167,6 +172,8 @@ void Device::Render()
   ImGui::ShowDemoWindow();
   if (ImGui::Begin("background"))
   {
+    ImGui::SliderFloat("Render Scale", &renderScale, 0.3f, 1.f);
+
     ComputeEffect& selected = backgroundEffects[currentBackgroundEffect];
 
     ImGui::Text("Selected effect: ", selected.name);
@@ -188,27 +195,35 @@ void Device::Render()
                            1000000000));
   get_current_frame()._deletionQueue.flush();
 
-  VK_CHECK(vkResetFences(_device, 1, &get_current_frame()._renderFence));
-
   uint32_t swapchainImageIndex;
-  VK_CHECK(vkAcquireNextImageKHR(_device, _swapchain, 1000000000,
-                                 get_current_frame()._swapchainSemaphore,
-                                 nullptr, &swapchainImageIndex));
+  VkResult e = vkAcquireNextImageKHR(_device, _swapchain, 1000000000,
+                                     get_current_frame()._swapchainSemaphore,
+                                     nullptr, &swapchainImageIndex);
+  if (e == VK_ERROR_OUT_OF_DATE_KHR)
+  {
+    resize_requested = true;
+    return;
+  }
+  _drawExtent.height =
+      (std::min)(_swapchainExtent.height, _drawImage.imageExtent.height) *
+      renderScale;
+  _drawExtent.width =
+      (std::min)(_swapchainExtent.width, _drawImage.imageExtent.width) *
+      renderScale;
+
+  VK_CHECK(vkResetFences(_device, 1, &get_current_frame()._renderFence));
 
   // naming it cmd for shorter writing
   VkCommandBuffer cmd = get_current_frame()._mainCommandBuffer;
 
   // now that we are sure that the commands finished executing, we can safely
   // reset the command buffer to begin recording again.
-  VK_CHECK(vkResetCommandBuffer(cmd, 0));
+  VK_CHECK(vkResetCommandBuffer(get_current_frame()._mainCommandBuffer, 0));
 
   // begin the command buffer recording. We will use this command buffer exactly
   // once, so we want to let vulkan know that
   VkCommandBufferBeginInfo cmdBeginInfo = vkinit::command_buffer_begin_info(
       VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-
-  _drawExtent.width = _drawImage.imageExtent.width;
-  _drawExtent.height = _drawImage.imageExtent.height;
 
   VK_CHECK(vkBeginCommandBuffer(cmd, &cmdBeginInfo));
 
@@ -293,7 +308,12 @@ void Device::Render()
 
   presentInfo.pImageIndices = &swapchainImageIndex;
 
-  VK_CHECK(vkQueuePresentKHR(_graphicsQueue, &presentInfo));
+  VkResult presentResult = vkQueuePresentKHR(_graphicsQueue, &presentInfo);
+  if (presentResult == VK_ERROR_OUT_OF_DATE_KHR)
+  {
+    resize_requested = true;
+    return;
+  }
 
   // increase the number of frames drawn
   _frameNumber++;
@@ -433,7 +453,7 @@ void internal::draw_geometry(VkCommandBuffer cmd)
       _depthImage.imageView, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL);
 
   VkRenderingInfo renderInfo =
-      vkinit::rendering_info(_windowExtent, &colorAttachment, &depthAttachment);
+      vkinit::rendering_info(_drawExtent, &colorAttachment, &depthAttachment);
 
   vkCmdBeginRendering(cmd, &renderInfo);
 
@@ -504,10 +524,6 @@ void internal::init_triangle_pipeline()
   {
     log::Error("Error when building the triangle fragment shader module");
   }
-  else
-  {
-    log::Info("Triangle fragment shader succesfully loaded");
-  }
 
   VkShaderModule triangleVertexShader;
   if (!vkutil::load_shader_module(
@@ -515,10 +531,6 @@ void internal::init_triangle_pipeline()
           &triangleVertexShader))
   {
     log::Error("Error when building the triangle vertex shader module");
-  }
-  else
-  {
-    log::Info("Triangle vertex shader succesfully loaded");
   }
 
   // build the pipeline layout that controls the inputs/outputs of the shader
@@ -953,6 +965,21 @@ void internal::init_default_data()
         destroy_buffer(rectangle.indexBuffer);
         destroy_buffer(rectangle.vertexBuffer);
       });
+}
+void hm::Device::resize_swapchain()
+{
+  vkDeviceWaitIdle(_device);
+
+  destroy_swapchain();
+
+  int w, h;
+  SDL_GetWindowSize(_window, &w, &h);
+  _windowExtent.width = w;
+  _windowExtent.height = h;
+
+  create_swapchain(_windowExtent.width, _windowExtent.height);
+
+  resize_requested = false;
 }
 void internal::init_mesh_pipeline()
 {

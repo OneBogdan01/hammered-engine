@@ -41,11 +41,13 @@ class Device
   void InitImGui();
   // API specific initialization of ImGui
   void InitPlatformImGui();
+  void resize_swapchain();
 
   bool m_shouldClose {false};
   bool m_shouldRender {false};
 
   gfx::GRAPHICS_API m_graphicsApi {gfx::GRAPHICS_API::OPENGL};
+  bool resize_requested {false};
 };
 
 } // namespace hm

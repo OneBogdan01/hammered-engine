@@ -25,6 +25,8 @@ Device::~Device()
 {
   DestroyBackend();
 }
+//TODO
+void Device::resize_swapchain() {}
 
 void Device::Initialize()
 {
