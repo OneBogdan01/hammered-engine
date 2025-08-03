@@ -19,7 +19,37 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib/$<CONFIG>)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin/$<CONFIG>)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin/$<CONFIG>)
 
+# Externals TODO not all externals are added like so
+# From https://github.com/CloakedRex6063/Neo/blob/master/scripts/cmake/utility.cmake
+function(add_external name url tag)
+    set(src_dir "")   # Default empty
+    set(bin_dir "")   # Default empty
 
+    # If more than 3 args, treat 4th as src_dir
+    if(ARGC GREATER 3)
+        set(src_dir "${ARGV3}")
+    endif()
+
+    # If more than 4 args, treat 5th as bin_dir
+    if(ARGC GREATER 4)
+        set(bin_dir "${ARGV4}")
+    endif()
+    
+    FetchContent_Declare(
+            ${name}
+            GIT_REPOSITORY ${url}
+            GIT_TAG ${tag}
+    )
+    FetchContent_MakeAvailable(${name})
+    if(NOT src_dir STREQUAL "")
+        set(${src_dir} "${${name}_SOURCE_DIR}" PARENT_SCOPE)
+    endif()
+
+    if(NOT bin_dir STREQUAL "")
+        set(${bin_dir} "${${name}_BINARY_DIR}" PARENT_SCOPE)
+    endif()
+    set_target_properties(${name} PROPERTIES FOLDER "engine/external")
+endfunction()
 # Asset function
 set(ASSET_SOURCE_DIR "${CMAKE_SOURCE_DIR}/game/assets")
 function(configure_assets_for target)

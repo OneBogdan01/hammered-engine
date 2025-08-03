@@ -57,6 +57,12 @@ void Engine::Run()
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
       continue;
     }
+    // TODO move to a proper place
+    if (m_device->resize_requested)
+    {
+      m_device->resize_swapchain();
+    }
+
     m_device->PreRender();
 
     m_device->Render();

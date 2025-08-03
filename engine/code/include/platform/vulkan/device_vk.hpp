@@ -3,9 +3,10 @@
 
 #include "platform/vulkan/descriptors_vk.hpp"
 
-namespace hm::internal
+namespace hm
 {
-
+namespace internal
+{
 struct DeletionQueue
 {
   std::deque<std::function<void()>> deletors;
@@ -53,4 +54,7 @@ struct ComputeEffect
 };
 
 constexpr uint32_t FRAME_OVERLAP = 2;
-} // namespace hm::internal
+} // namespace internal
+GPUMeshBuffers UploadMesh(std::span<uint32_t> indicies,
+                          std::span<Vertex> vertices);
+} // namespace hm

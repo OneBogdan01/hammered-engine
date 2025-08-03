@@ -14,6 +14,8 @@ foreach(backend ${GAME_BACKENDS})
             fmt::fmt
             SDL3::SDL3
             imgui_core
+            tinygltf
+            ktx
     )
 
     # Backend-specific libraries
