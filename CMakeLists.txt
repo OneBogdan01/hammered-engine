@@ -2,11 +2,17 @@
 
 
 include(FetchContent)
-## Keep it tidy
-include(cmake_utility/utility.cmake)
+
+## Versioning
+set( HM_VERSION_MAJOR 0 )
+set( HM_VERSION_MINOR 0 )
+set( HM_VERSION_PATCH 1 )
+
+set( HM_VERSION ${HM_VERSION_MAJOR}.${HM_VERSION_MINOR}.${HM_VERSION_PATCH})
 
 project(hammered_template VERSION ${HM_VERSION})
-
+## Keep it tidy
+include(cmake_utility/utility.cmake)
 
 # Backend selection
 set(GAME_BACKENDS "")
