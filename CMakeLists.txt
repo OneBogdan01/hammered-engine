@@ -13,14 +13,14 @@ set(GAME_BACKENDS "")
 
 option(ENABLE_GL_BACKEND "Build with OpenGL backend" ON)
 option(ENABLE_VK_BACKEND "Build with Vulkan backend" ON)
-if(ENABLE_GL_BACKEND)
-    list(APPEND GAME_BACKENDS gl)
-endif()
+
 
 if(ENABLE_VK_BACKEND)
     list(APPEND GAME_BACKENDS vk)
 endif()
-
+if(ENABLE_GL_BACKEND)
+    list(APPEND GAME_BACKENDS gl)
+endif()
 
 # Error if no backends enabled
 if(NOT GAME_BACKENDS)
