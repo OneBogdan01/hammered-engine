@@ -2,10 +2,15 @@
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set(VKB_WSI_SELECTION "XCB" CACHE STRING "Select WSI target (XCB, XLIB, WAYLAND, D2D)")
-## Multithreaded
+
 if(MSVC)
     add_compile_options(/MP)
-endif(MSVC)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 /WX /EHsc") 
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /Zi /MTd /Od /Ob0 /DDEBUG")
+    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} /O2 /Zi /DDEVELOP /MT")
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /O2 /DNDEBUG /MT")
+endif()
+
 
 
 ## Versioning
@@ -96,6 +101,9 @@ function(add_game_backends backends)
 
         exec_macro_for(${target} "${backends}")
         exec_macro_for(${engine} "${backend}")
+        if(MSVC)
+            target_compile_definitions(${engine} PRIVATE NOMINMAX)
+        endif()
 
         set_property(TARGET ${target} PROPERTY CXX_STANDARD 20)
         configure_assets_for(${target})
@@ -104,13 +112,6 @@ function(add_game_backends backends)
 
     endforeach()
 
-    # Compiler flags
-    if(MSVC)
-        set(CMAKE_CXX_FLAGS "/W4 /WX /EHsc") 
-        set(CMAKE_CXX_FLAGS_DEBUG "/Zi /MTd /Od /Ob0 /DDEBUG")
-        set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "/O2 /Zi /DDEVELOP /MT")
-        set(CMAKE_CXX_FLAGS_RELEASE "/O2 /DNDEBUG /MT")
-    endif()
     add_custom_target(build_all_backends ALL
         DEPENDS ${game_exes}
     )
