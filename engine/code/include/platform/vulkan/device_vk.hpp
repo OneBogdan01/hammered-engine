@@ -30,11 +30,14 @@ struct DeletionQueue
 
 struct FrameData
 {
-  VkCommandPool _commandPool;
-  VkCommandBuffer _mainCommandBuffer;
   VkSemaphore _swapchainSemaphore, _renderSemaphore;
   VkFence _renderFence;
+
+  VkCommandPool _commandPool;
+  VkCommandBuffer _mainCommandBuffer;
+
   DeletionQueue _deletionQueue;
+  DescriptorAllocatorGrowable _frameDescriptors;
 };
 struct ComputePushConstants
 {
@@ -54,6 +57,16 @@ struct ComputeEffect
 };
 
 constexpr uint32_t FRAME_OVERLAP = 2;
+struct GPUSceneData
+{
+  glm::mat4 view;
+  glm::mat4 proj;
+  glm::mat4 viewproj;
+  glm::vec4 ambientColor;
+  glm::vec4 sunlightDirection; // w for sun power
+  glm::vec4 sunlightColor;
+};
+
 } // namespace internal
 GPUMeshBuffers UploadMesh(std::span<uint32_t> indicies,
                           std::span<Vertex> vertices);

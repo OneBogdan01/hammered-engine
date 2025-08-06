@@ -2,18 +2,18 @@
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set(VKB_WSI_SELECTION "XCB" CACHE STRING "Select WSI target (XCB, XLIB, WAYLAND, D2D)")
-## Multithreaded
+
 if(MSVC)
     add_compile_options(/MP)
-endif(MSVC)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 /WX /EHsc /DNOMINMAX") 
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /Zi /MTd /Od /Ob0 /DDEBUG")
+    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} /O2 /Zi /DDEVELOP /MT")
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /O2 /DNDEBUG /MT")
+endif()
 
 
-## Versioning
-set( HM_VERSION_MAJOR 0 )
-set( HM_VERSION_MINOR 0 )
-set( HM_VERSION_PATCH 1 )
 
-set( HM_VERSION ${HM_VERSION_MAJOR}.${HM_VERSION_MINOR}.${HM_VERSION_PATCH})
+
 ## Setting the dlls and .exe in the same folder
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib/$<CONFIG>)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin/$<CONFIG>)
@@ -97,6 +97,7 @@ function(add_game_backends backends)
         exec_macro_for(${target} "${backends}")
         exec_macro_for(${engine} "${backend}")
 
+
         set_property(TARGET ${target} PROPERTY CXX_STANDARD 20)
         configure_assets_for(${target})
 
@@ -104,13 +105,6 @@ function(add_game_backends backends)
 
     endforeach()
 
-    # Compiler flags
-    if(MSVC)
-        set(CMAKE_CXX_FLAGS "/W4 /WX /EHsc") 
-        set(CMAKE_CXX_FLAGS_DEBUG "/Zi /MTd /Od /Ob0 /DDEBUG")
-        set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "/O2 /Zi /DDEVELOP /MT")
-        set(CMAKE_CXX_FLAGS_RELEASE "/O2 /DNDEBUG /MT")
-    endif()
     add_custom_target(build_all_backends ALL
         DEPENDS ${game_exes}
     )

@@ -8,10 +8,15 @@ namespace hm
 {
 class Device;
 
+struct GLTFMaterial
+{
+  MaterialInstance data;
+};
 struct GeoSurface
 {
   uint32_t startIndex;
   uint32_t count;
+  std::shared_ptr<GLTFMaterial> material;
 };
 
 struct MeshAsset
@@ -21,8 +26,9 @@ struct MeshAsset
   std::vector<GeoSurface> surfaces;
   GPUMeshBuffers meshBuffers;
 };
+
 std::optional<std::vector<std::shared_ptr<MeshAsset>>> loadGltfMeshes(
-    Device* engine, const std::filesystem::path& filePath);
+     const std::filesystem::path&filePath);
 // forward declaration
 
 } // namespace hm

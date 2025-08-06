@@ -2,25 +2,31 @@
 
 
 include(FetchContent)
-## Keep it tidy
-include(cmake_utility/utility.cmake)
+
+## Versioning
+set( HM_VERSION_MAJOR 0 )
+set( HM_VERSION_MINOR 0 )
+set( HM_VERSION_PATCH 1 )
+
+set( HM_VERSION ${HM_VERSION_MAJOR}.${HM_VERSION_MINOR}.${HM_VERSION_PATCH})
 
 project(hammered_template VERSION ${HM_VERSION})
-
+## Keep it tidy
+include(cmake_utility/utility.cmake)
 
 # Backend selection
 set(GAME_BACKENDS "")
 
 option(ENABLE_GL_BACKEND "Build with OpenGL backend" ON)
 option(ENABLE_VK_BACKEND "Build with Vulkan backend" ON)
-if(ENABLE_GL_BACKEND)
-    list(APPEND GAME_BACKENDS gl)
-endif()
+
 
 if(ENABLE_VK_BACKEND)
     list(APPEND GAME_BACKENDS vk)
 endif()
-
+if(ENABLE_GL_BACKEND)
+    list(APPEND GAME_BACKENDS gl)
+endif()
 
 # Error if no backends enabled
 if(NOT GAME_BACKENDS)
