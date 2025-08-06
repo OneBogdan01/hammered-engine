@@ -15,7 +15,7 @@
 using namespace tinygltf;
 // TODO this is super slow for now
 std::optional<std::vector<std::shared_ptr<hm::MeshAsset>>> hm::loadGltfMeshes(
-    Device* engine, const std::filesystem::path& filePath)
+    const std::filesystem::path& filePath)
 {
   log::Info("Loading GLTF: {}", filePath.string());
 
@@ -174,7 +174,7 @@ std::optional<std::vector<std::shared_ptr<hm::MeshAsset>>> hm::loadGltfMeshes(
       }
       meshAsset.surfaces.push_back(newSurface);
     }
-    constexpr bool OverrideColors = true;
+    constexpr bool OverrideColors = false;
     if (OverrideColors)
     {
       for (Vertex& vtx : vertices)
@@ -188,4 +188,26 @@ std::optional<std::vector<std::shared_ptr<hm::MeshAsset>>> hm::loadGltfMeshes(
   }
 
   return meshes;
+}
+
+void MeshNode::Draw(const glm::mat4& topMatrix, DrawContext& ctx)
+{
+  glm::mat4 nodeMatrix = topMatrix * worldTransform;
+
+  for (auto& s : mesh->surfaces)
+  {
+    RenderObject def;
+    def.indexCount = s.count;
+    def.firstIndex = s.startIndex;
+    def.indexBuffer = mesh->meshBuffers.indexBuffer.buffer;
+    def.material = &s.material->data;
+
+    def.transform = nodeMatrix;
+    def.vertexBufferAddress = mesh->meshBuffers.vertexBufferAddress;
+
+    ctx.OpaqueSurfaces.push_back(def);
+  }
+
+  // recurse down
+  Node::Draw(topMatrix, ctx);
 }

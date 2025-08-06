@@ -20,6 +20,10 @@
 #include <unordered_map>
 #include <vector>
 
+namespace hm
+{
+struct MeshAsset;
+}
 /**
  * @brief Helper function to convert a data type
  *        to string using output stream operator.
@@ -27,7 +31,7 @@
  * @return String version of the given object
  */
 template<class T>
-inline std::string to_string(const T &value)
+inline std::string to_string(const T& value)
 {
   std::stringstream ss;
   ss << std::fixed << value;
@@ -35,7 +39,7 @@ inline std::string to_string(const T &value)
 }
 
 // https://github.com/KhronosGroup/Vulkan-Samples/blob/main/framework/common/vk_common.cpp#L27
-inline std::ostream &operator<<(std::ostream &os, const VkResult result)
+inline std::ostream& operator<<(std::ostream& os, const VkResult result)
 {
 #define WRITE_VK_ENUM(r) \
   case VK_##r:           \
@@ -116,6 +120,84 @@ struct GPUDrawPushConstants
   glm::mat4 worldMatrix;
   VkDeviceAddress vertexBuffer;
 };
+enum class MaterialPass : uint8_t
+{
+  MainColor,
+  Transparent,
+  Other
+};
+struct MaterialPipeline
+{
+  VkPipeline pipeline;
+  VkPipelineLayout layout;
+};
+
+struct MaterialInstance
+{
+  MaterialPipeline* pipeline;
+  VkDescriptorSet materialSet;
+  MaterialPass passType;
+};
+struct DrawContext;
+
+// base class for a renderable dynamic object
+class IRenderable
+{
+  virtual void Draw(const glm::mat4& topMatrix, DrawContext& ctx) = 0;
+};
+
+// implementation of a drawable scene node.
+// the scene node can hold children and will also keep a transform to propagate
+// to them
+struct Node : public IRenderable
+{
+  // parent pointer must be a weak pointer to avoid circular dependencies
+  std::weak_ptr<Node> parent;
+  std::vector<std::shared_ptr<Node>> children;
+
+  glm::mat4 localTransform;
+  glm::mat4 worldTransform;
+
+  void refreshTransform(const glm::mat4& parentMatrix)
+  {
+    worldTransform = parentMatrix * localTransform;
+    for (auto c : children)
+    {
+      c->refreshTransform(worldTransform);
+    }
+  }
+
+  virtual void Draw(const glm::mat4& topMatrix, DrawContext& ctx)
+  {
+    // draw children
+    for (auto& c : children)
+    {
+      c->Draw(topMatrix, ctx);
+    }
+  }
+};
+struct RenderObject
+{
+  uint32_t indexCount;
+  uint32_t firstIndex;
+  VkBuffer indexBuffer;
+
+  MaterialInstance* material;
+
+  glm::mat4 transform;
+  VkDeviceAddress vertexBufferAddress;
+};
+struct DrawContext
+{
+  std::vector<RenderObject> OpaqueSurfaces {};
+};
+struct MeshNode : public Node
+{
+  std::shared_ptr<hm::MeshAsset> mesh;
+
+  virtual void Draw(const glm::mat4& topMatrix, DrawContext& ctx) override;
+};
+
 #define VK_CHECK(x)                                                         \
   do                                                                        \
   {                                                                         \
