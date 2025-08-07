@@ -24,6 +24,9 @@ namespace hm
 {
 struct MeshAsset;
 }
+namespace hm
+{
+
 /**
  * @brief Helper function to convert a data type
  *        to string using output stream operator.
@@ -207,3 +210,5 @@ struct MeshNode : public Node
       throw std::runtime_error("Detected Vulkan error: " + to_string(err)); \
     }                                                                       \
   } while (0)
+
+} // namespace hm

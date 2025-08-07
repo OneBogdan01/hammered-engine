@@ -22,6 +22,7 @@
 
 #define VMA_IMPLEMENTATION
 
+#include "camera.hpp"
 #include "vk_mem_alloc.h"
 
 #include "backends/imgui_impl_sdl3.h"
@@ -116,8 +117,6 @@ GPUMeshBuffers rectangle;
 void init_mesh_pipeline();
 
 void create_swapchain(uint32_t width, uint32_t height);
-AllocatedBuffer create_buffer(size_t allocSize, VkBufferUsageFlags usage,
-                              VmaMemoryUsage memoryUsage);
 
 void destroy_swapchain();
 void destroy_buffer(const AllocatedBuffer& buffer);
@@ -147,58 +146,23 @@ AllocatedImage create_image(void* data, VkExtent3D size, VkFormat format,
                             VkImageUsageFlags usage, bool mipmapped = false);
 void destroy_image(const AllocatedImage& img);
 
-AllocatedImage _whiteImage;
-AllocatedImage _blackImage;
-AllocatedImage _greyImage;
-AllocatedImage _errorCheckerboardImage;
-
-VkSampler _defaultSamplerLinear;
-VkSampler _defaultSamplerNearest;
-VkDescriptorSetLayout _singleImageDescriptorLayout;
-
-struct GLTFMetallic_Roughness
-{
-  MaterialPipeline opaquePipeline;
-  MaterialPipeline transparentPipeline;
-
-  VkDescriptorSetLayout materialLayout;
-
-  struct MaterialConstants
-  {
-    glm::vec4 colorFactors;
-    glm::vec4 metal_rough_factors;
-    // padding, we need it anyway for uniform buffers
-    glm::vec4 extra[14];
-  };
-
-  struct MaterialResources
-  {
-    AllocatedImage colorImage;
-    VkSampler colorSampler;
-    AllocatedImage metalRoughImage;
-    VkSampler metalRoughSampler;
-    VkBuffer dataBuffer;
-    uint32_t dataBufferOffset;
-  };
-
-  DescriptorWriter writer;
-
-  void build_pipelines();
-  void clear_resources(VkDevice device);
-
-  MaterialInstance write_material(
-      VkDevice device, MaterialPass pass, const MaterialResources& resources,
-      DescriptorAllocatorGrowable& descriptorAllocator);
-};
 MaterialInstance defaultData;
-GLTFMetallic_Roughness metalRoughMaterial;
+
 DrawContext mainDrawContext;
 std::unordered_map<std::string, std::shared_ptr<Node>> loadedNodes;
 
-void update_scene();
+Camera mainCamera;
+void update_scene(Camera& mainCamera);
+
+std::unordered_map<std::string, std::shared_ptr<LoadedGLTF>> loadedScenes;
 } // namespace hm::internal
 using namespace hm;
 using namespace hm::internal;
+
+void hm::Device::processSDLEvent(SDL_Event& e)
+{
+  mainCamera.processSDLEvent(e);
+}
 void Device::Initialize()
 {
   SDL_WindowFlags window_flags = SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE;
@@ -213,6 +177,12 @@ void Device::Initialize()
   init_descriptors();
   init_pipelines();
   init_default_data();
+  mainCamera.velocity = glm::vec3(0.f);
+  mainCamera.position = glm::vec3(0, 0, 5);
+
+  mainCamera.pitch = 0;
+  mainCamera.yaw = 0;
+
   InitImGui();
 
   // everything went fine
@@ -232,6 +202,7 @@ void Device::PreRender()
   ImGui::NewFrame();
   ChangeGraphicsBackend();
 }
+
 Device::~Device() {}
 
 void Device::Render()
@@ -259,7 +230,7 @@ void Device::Render()
   ImGui::Render();
   // wait until the gpu has finished rendering the last frame. Timeout of 1
   // second
-  update_scene();
+  update_scene(mainCamera);
   VK_CHECK(vkWaitForFences(_device, 1, &get_current_frame()._renderFence, true,
                            1000000000));
 
@@ -810,23 +781,28 @@ MaterialInstance GLTFMetallic_Roughness::write_material(
 
   return matData;
 }
-void internal::update_scene()
+void internal::update_scene(Camera& mainCamera)
 {
   mainDrawContext.OpaqueSurfaces.clear();
 
   loadedNodes["Suzanne"]->Draw(glm::mat4 {1.f}, mainDrawContext);
 
-  sceneData.view =
-      glm::translate(glm::identity<glm::mat4>(), glm::vec3 {0, 0, -5});
+  mainCamera.update();
+
+  glm::mat4 view = mainCamera.getViewMatrix();
+
   // camera projection
-  sceneData.proj = glm::perspective(
+  glm::mat4 projection = glm::perspective(
       glm::radians(70.f),
       (float)_windowExtent.width / (float)_windowExtent.height, 10000.f, 0.1f);
 
   // invert the Y direction on projection matrix so that we are more similar
   // to opengl and gltf axis
-  sceneData.proj[1][1] *= -1;
-  sceneData.viewproj = sceneData.proj * sceneData.view;
+  projection[1][1] *= -1;
+
+  sceneData.view = view;
+  sceneData.proj = projection;
+  sceneData.viewproj = projection * view;
 
   // some default lighting parameters
   sceneData.ambientColor = glm::vec4(.1f);
@@ -1540,9 +1516,8 @@ void internal::create_swapchain(uint32_t width, uint32_t height)
   _swapchainImages = vkbSwapchain.get_images().value();
   _swapchainImageViews = vkbSwapchain.get_image_views().value();
 }
-AllocatedBuffer internal::create_buffer(size_t allocSize,
-                                        VkBufferUsageFlags usage,
-                                        VmaMemoryUsage memoryUsage)
+AllocatedBuffer hm::create_buffer(size_t allocSize, VkBufferUsageFlags usage,
+                                  VmaMemoryUsage memoryUsage)
 {
   // allocate buffer
   VkBufferCreateInfo bufferInfo = {.sType =

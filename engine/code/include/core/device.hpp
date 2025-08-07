@@ -3,7 +3,10 @@
 #include <string_view>
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 
+#include <SDL3/SDL_events.h>
 #include <glm/glm.hpp>
+
+class Camera;
 namespace hm
 {
 constexpr const char* WindowTitle {"Hammered Engine"};
@@ -22,7 +25,6 @@ enum class GRAPHICS_API
 class Device
 {
  public:
-  Device();
   ~Device();
   void Render();
   void ChangeGraphicsBackend() const;
@@ -30,6 +32,8 @@ class Device
   void Initialize();
   static void DestroyBackend();
   void SetGraphicsAPI(gfx::GRAPHICS_API api);
+  static void processSDLEvent(SDL_Event& e);
+  Device();
 
   void SetViewportSize(const glm::uvec2& windowSize,
                        const glm::ivec2& windowPosition);

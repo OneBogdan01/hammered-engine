@@ -263,6 +263,7 @@ void Device::InitPlatformImGui()
   ImGui_ImplSDL3_InitForOpenGL(window, glContext);
   ImGui_ImplOpenGL3_Init();
 }
+void Device::processSDLEvent(SDL_Event& e) {}
 
 SDL_GLContextState* device::GetGlContext()
 {

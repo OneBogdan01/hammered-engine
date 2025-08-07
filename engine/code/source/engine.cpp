@@ -35,7 +35,6 @@ void Engine::Run()
 
     while (SDL_PollEvent(&event))
     {
-      ImGui_ImplSDL3_ProcessEvent(&event); // Forward your event to backend
       if (event.type == SDL_EVENT_QUIT ||
           (event.type == SDL_EVENT_KEY_DOWN && event.key.key == SDLK_ESCAPE))
       {
@@ -49,6 +48,8 @@ void Engine::Run()
       {
         m_device->m_shouldRender = false;
       }
+      m_device->processSDLEvent(event);
+      ImGui_ImplSDL3_ProcessEvent(&event); // Forward your event to backend
     }
     // do not draw if we are minimized
     if (m_device->m_shouldRender)
