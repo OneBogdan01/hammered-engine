@@ -116,6 +116,6 @@ struct GLTFMetallic_Roughness
       VkDevice device, MaterialPass pass, const MaterialResources& resources,
       DescriptorAllocatorGrowable& descriptorAllocator);
 };
-GLTFMetallic_Roughness metalRoughMaterial;
+inline GLTFMetallic_Roughness metalRoughMaterial;
 
 } // namespace hm

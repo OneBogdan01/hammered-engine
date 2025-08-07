@@ -5,13 +5,11 @@
 #include <iostream>
 
 #define TINYGLTF_IMPLEMENTATION
-#define TINYGLTF_NO_STB_IMAGE
-#define TINYGLTF_NO_STB_IMAGE_WRITE
-#define TINYGLTF_NO_EXTERNAL_IMAGE
-#include "engine.hpp"
+
+#include <tiny_gltf.h>
+
 #include "utility/console.hpp"
 #include <iostream>
-#include "tiny_gltf.h"
 
 #include <volk.h>
 #include "platform/vulkan/device_vk.hpp"
@@ -617,3 +615,4 @@ void LoadedGLTF::Draw(const glm::mat4& topMatrix, DrawContext& ctx)
     n->Draw(topMatrix, ctx);
   }
 }
+void LoadedGLTF::clearAll() {}
