@@ -264,7 +264,6 @@ std::optional<std::shared_ptr<hm::LoadedGLTF>> hm::loadGltf(
   std::string err;
   std::string warn;
   bool res {false};
-  loader.LoadBinaryFromFile(&model, &err, &warn, filePath.string());
 
   if (filePath.string().ends_with(".gltf"))
   {
