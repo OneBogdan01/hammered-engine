@@ -57,5 +57,7 @@ struct LoadedGLTF : public IRenderable
  private:
   void clearAll();
 };
-
+// forward declaration
+std::optional<std::shared_ptr<hm::LoadedGLTF>> loadGltf(
+    VkDevice _device, const std::filesystem::path& filePath);
 } // namespace hm

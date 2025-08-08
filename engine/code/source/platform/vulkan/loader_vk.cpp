@@ -5,7 +5,9 @@
 #include <iostream>
 
 #define TINYGLTF_IMPLEMENTATION
-
+// TODO replace with ktx
+#define STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <tiny_gltf.h>
 
 #include "utility/console.hpp"
@@ -252,7 +254,7 @@ void MeshNode::Draw(const glm::mat4& topMatrix, DrawContext& ctx)
 }
 
 // TODO only works for vulkan
-std::optional<std::shared_ptr<hm::LoadedGLTF>> loadGltf(
+std::optional<std::shared_ptr<hm::LoadedGLTF>> hm::loadGltf(
     VkDevice _device, const std::filesystem::path& filePath)
 {
   log::Info("Loading GLTF: {}", filePath.string());
@@ -392,8 +394,10 @@ std::optional<std::shared_ptr<hm::LoadedGLTF>> loadGltf(
   std::vector<Vertex> vertices;
   for (auto& mesh : model.meshes)
   {
-    MeshAsset meshAsset;
-    meshAsset.name = mesh.name;
+    std::shared_ptr<MeshAsset> newmesh = std::make_shared<MeshAsset>();
+    meshes.push_back(newmesh);
+    file.meshes[mesh.name.c_str()] = newmesh;
+    newmesh->name = mesh.name;
     indices.clear();
     vertices.clear();
     for (auto& primitive : mesh.primitives)
@@ -528,10 +532,10 @@ std::optional<std::shared_ptr<hm::LoadedGLTF>> loadGltf(
       {
         newSurface.material = materials[0];
       }
-      meshAsset.surfaces.push_back(newSurface);
+      newmesh->surfaces.push_back(newSurface);
     }
 
-    meshAsset.meshBuffers = UploadMesh(indices, vertices);
+    newmesh->meshBuffers = UploadMesh(indices, vertices);
   }
   for (tinygltf::Node& node : model.nodes)
   {

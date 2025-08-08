@@ -430,7 +430,7 @@ void internal::cleanup()
     ImGui::DestroyContext();
     // make sure the gpu has stopped doing its things
     vkDeviceWaitIdle(_device);
-
+    loadedScenes.clear();
     // free per-frame structures and deletion queue
     for (int i = 0; i < FRAME_OVERLAP; i++)
     {
@@ -784,6 +784,8 @@ MaterialInstance GLTFMetallic_Roughness::write_material(
 void internal::update_scene(Camera& mainCamera)
 {
   mainDrawContext.OpaqueSurfaces.clear();
+
+  loadedScenes["structure"]->Draw(glm::mat4 {1.f}, mainDrawContext);
 
   loadedNodes["Suzanne"]->Draw(glm::mat4 {1.f}, mainDrawContext);
 
@@ -1396,6 +1398,13 @@ void internal::init_default_data()
 
     loadedNodes[m->name] = std::move(newNode);
   }
+
+  std::string structurePath = {io::GetPath("models/structure.glb")};
+  const auto structureFile = loadGltf(_device, structurePath);
+
+  assert(structureFile.has_value());
+
+  loadedScenes["structure"] = *structureFile;
 }
 void hm::Device::resize_swapchain()
 {
