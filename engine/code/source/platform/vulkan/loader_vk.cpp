@@ -20,6 +20,30 @@
 #include <glm/gtx/quaternion.hpp>
 using namespace tinygltf;
 using namespace hm;
+inline void ReadComponent(const unsigned char* ptr, int type, int c, bool norm,
+                          float& out)
+{
+  switch (type)
+  {
+    case TINYGLTF_COMPONENT_TYPE_FLOAT:
+      out = ((float*)ptr)[c];
+      break;
+    case TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE:
+      out = norm ? ((uint8_t*)ptr)[c] / 255.f : float(((uint8_t*)ptr)[c]);
+      break;
+    case TINYGLTF_COMPONENT_TYPE_BYTE:
+      out = norm ? std::max(-1.f, ((int8_t*)ptr)[c] / 127.f)
+                 : float(((int8_t*)ptr)[c]);
+      break;
+    case TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT:
+      out = norm ? ((uint16_t*)ptr)[c] / 65535.f : float(((uint16_t*)ptr)[c]);
+      break;
+    case TINYGLTF_COMPONENT_TYPE_SHORT:
+      out = norm ? std::max(-1.f, ((int16_t*)ptr)[c] / 32767.f)
+                 : float(((int16_t*)ptr)[c]);
+      break;
+  }
+}
 std::optional<AllocatedImage> load_image(const tinygltf::Model& model,
                                          const tinygltf::Image& image)
 {
@@ -207,6 +231,7 @@ std::optional<std::vector<std::shared_ptr<hm::MeshAsset>>> hm::loadGltfMeshes(
         const auto& view = model.bufferViews[accessor.bufferView];
         const auto& buffer = model.buffers[view.buffer];
         Vertex vert {};
+        vert.color = glm::vec4 {1.0f};
         const auto* data = reinterpret_cast<const float*>(
             &buffer.data[view.byteOffset + accessor.byteOffset]);
         size_t index {0};
@@ -462,6 +487,8 @@ std::optional<std::shared_ptr<hm::LoadedGLTF>> hm::loadGltf(
           model.textures[mat.pbrMetallicRoughness.baseColorTexture.index];
 
       size_t img = tex.source;
+      assert(tex.sampler >= 0);
+
       size_t sampler = tex.sampler;
 
       materialResources.colorImage = images[img];
@@ -585,30 +612,37 @@ std::optional<std::shared_ptr<hm::LoadedGLTF>> hm::loadGltf(
           }
         }
       }
+      // TODO get color by vertex
       {
-        auto iterator = primitive.attributes.find("COLOR_0");
-        if (iterator != primitive.attributes.end())
+        auto it = primitive.attributes.find("COLOR_0");
+        if (it != primitive.attributes.end())
         {
-          auto& accessor = model.accessors[iterator->second];
-
+          const auto& accessor = model.accessors[it->second];
           const auto& view = model.bufferViews[accessor.bufferView];
           const auto& buffer = model.buffers[view.buffer];
 
-          const auto* data = reinterpret_cast<const float*>(
-              &buffer.data[view.byteOffset + accessor.byteOffset]);
-          size_t index {0};
-          for (; index < accessor.count; index++)
+          const unsigned char* base =
+              buffer.data.data() + view.byteOffset + accessor.byteOffset;
+          size_t stride = accessor.ByteStride(view);
+          int numComp = tinygltf::GetNumComponentsInType(accessor.type);
+
+          for (size_t i = 0; i < accessor.count; ++i)
           {
-            glm::vec4 color {};
-            color.r = data[index * 4 + 0];
-            color.g = data[index * 4 + 1];
-            color.b = data[index * 4 + 2];
-            color.a = data[index * 4 + 3];
-            vertices[initialVtx + index].color = color;
+            glm::vec4 color(1.0f); // default white
+            const unsigned char* ptr = base + i * stride;
+
+            for (int c = 0; c < numComp; ++c)
+            {
+              float v = 0.0f;
+              ReadComponent(ptr, accessor.componentType, c, accessor.normalized,
+                            v);
+              color[c] = v;
+            }
+            vertices[initialVtx + i].color = color;
           }
         }
       }
-      if (primitive.material > 0)
+      if (primitive.material >= 0)
       {
         newSurface.material = materials[primitive.material];
       }
