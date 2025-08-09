@@ -50,12 +50,13 @@ struct LoadedGLTF : public IRenderable
 
   AllocatedBuffer materialDataBuffer;
 
-  ~LoadedGLTF() { clearAll(); };
+  // TODO use this instead
+  //~LoadedGLTF() { clearAll(TODO); };
+  void clearAll(VkDevice dv);
 
   virtual void Draw(const glm::mat4& topMatrix, DrawContext& ctx);
 
  private:
-  void clearAll();
 };
 // forward declaration
 std::optional<std::shared_ptr<hm::LoadedGLTF>> loadGltf(

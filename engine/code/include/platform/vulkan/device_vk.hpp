@@ -117,5 +117,12 @@ struct GLTFMetallic_Roughness
       DescriptorAllocatorGrowable& descriptorAllocator);
 };
 inline GLTFMetallic_Roughness metalRoughMaterial;
+// textures
+AllocatedImage create_image(VkExtent3D size, VkFormat format,
+                            VkImageUsageFlags usage, bool mipmapped = false);
+AllocatedImage create_image(void* data, VkExtent3D size, VkFormat format,
+                            VkImageUsageFlags usage, bool mipmapped = false);
+void destroy_buffer(const AllocatedBuffer& buffer);
+void destroy_image(const AllocatedImage& img);
 
 } // namespace hm

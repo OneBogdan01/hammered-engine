@@ -119,7 +119,7 @@ void init_mesh_pipeline();
 void create_swapchain(uint32_t width, uint32_t height);
 
 void destroy_swapchain();
-void destroy_buffer(const AllocatedBuffer& buffer);
+
 // shuts down the engine
 void cleanup();
 void draw_background(VkCommandBuffer cmd);
@@ -138,13 +138,6 @@ float renderScale = 1.f;
 GPUSceneData sceneData;
 
 VkDescriptorSetLayout _gpuSceneDataDescriptorLayout;
-
-// textures
-AllocatedImage create_image(VkExtent3D size, VkFormat format,
-                            VkImageUsageFlags usage, bool mipmapped = false);
-AllocatedImage create_image(void* data, VkExtent3D size, VkFormat format,
-                            VkImageUsageFlags usage, bool mipmapped = false);
-void destroy_image(const AllocatedImage& img);
 
 MaterialInstance defaultData;
 
@@ -430,6 +423,10 @@ void internal::cleanup()
     ImGui::DestroyContext();
     // make sure the gpu has stopped doing its things
     vkDeviceWaitIdle(_device);
+    for (auto& scene : loadedScenes)
+    {
+      scene.second->clearAll(_device);
+    }
     loadedScenes.clear();
     // free per-frame structures and deletion queue
     for (int i = 0; i < FRAME_OVERLAP; i++)
@@ -549,7 +546,7 @@ void internal::draw_geometry(VkCommandBuffer cmd)
 
   vkCmdSetScissor(cmd, 0, 1, &scissor);
   // vkCmdDraw(cmd, 3, 1, 0, 0);
-  for (const RenderObject& draw : mainDrawContext.OpaqueSurfaces)
+  auto draw = [&](const RenderObject& draw)
   {
     vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,
                       draw.material->pipeline->pipeline);
@@ -570,12 +567,22 @@ void internal::draw_geometry(VkCommandBuffer cmd)
                        sizeof(GPUDrawPushConstants), &pushConstants);
 
     vkCmdDrawIndexed(cmd, draw.indexCount, 1, draw.firstIndex, 0, 0);
+  };
+
+  for (auto& r : mainDrawContext.OpaqueSurfaces)
+  {
+    draw(r);
+  }
+
+  for (auto& r : mainDrawContext.TransparentSurfaces)
+  {
+    draw(r);
   }
 
   vkCmdEndRendering(cmd);
 }
-AllocatedImage internal::create_image(VkExtent3D size, VkFormat format,
-                                      VkImageUsageFlags usage, bool mipmapped)
+AllocatedImage hm::create_image(VkExtent3D size, VkFormat format,
+                                VkImageUsageFlags usage, bool mipmapped)
 {
   AllocatedImage newImage;
   newImage.imageFormat = format;
@@ -617,9 +624,8 @@ AllocatedImage internal::create_image(VkExtent3D size, VkFormat format,
 
   return newImage;
 }
-AllocatedImage internal::create_image(void* data, VkExtent3D size,
-                                      VkFormat format, VkImageUsageFlags usage,
-                                      bool mipmapped)
+AllocatedImage hm::create_image(void* data, VkExtent3D size, VkFormat format,
+                                VkImageUsageFlags usage, bool mipmapped)
 {
   size_t data_size = size.depth * size.width * size.height * 4;
   AllocatedBuffer uploadbuffer = create_buffer(
@@ -664,7 +670,7 @@ AllocatedImage internal::create_image(void* data, VkExtent3D size,
 
   return new_image;
 }
-void internal::destroy_image(const AllocatedImage& img)
+void hm::destroy_image(const AllocatedImage& img)
 {
   vkDestroyImageView(_device, img.imageView, nullptr);
   vmaDestroyImage(_allocator, img.image, img.allocation);
@@ -784,7 +790,7 @@ MaterialInstance GLTFMetallic_Roughness::write_material(
 void internal::update_scene(Camera& mainCamera)
 {
   mainDrawContext.OpaqueSurfaces.clear();
-
+  mainDrawContext.TransparentSurfaces.clear();
   loadedScenes["structure"]->Draw(glm::mat4 {1.f}, mainDrawContext);
 
   loadedNodes["Suzanne"]->Draw(glm::mat4 {1.f}, mainDrawContext);
@@ -1621,7 +1627,7 @@ void internal::destroy_swapchain()
     vkDestroyImageView(_device, _swapchainImageViews[i], nullptr);
   }
 }
-void internal::destroy_buffer(const AllocatedBuffer& buffer)
+void hm::destroy_buffer(const AllocatedBuffer& buffer)
 {
   vmaDestroyBuffer(_allocator, buffer.buffer, buffer.allocation);
 }

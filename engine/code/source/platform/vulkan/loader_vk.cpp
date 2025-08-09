@@ -20,6 +20,78 @@
 #include <glm/gtx/quaternion.hpp>
 using namespace tinygltf;
 using namespace hm;
+std::optional<AllocatedImage> load_image(const tinygltf::Model& model,
+                                         const tinygltf::Image& image)
+{
+  AllocatedImage newImage {};
+  int width = 0, height = 0, channels = 0;
+
+  auto upload_image = [&](unsigned char* pixels)
+  {
+    VkExtent3D imagesize {(uint32_t)width, (uint32_t)height, 1};
+    newImage = create_image(pixels, imagesize, VK_FORMAT_R8G8B8A8_UNORM,
+                            VK_IMAGE_USAGE_SAMPLED_BIT, false);
+  };
+
+  if (image.uri.empty())
+  {
+    if (image.bufferView >= 0)
+    {
+      const auto& view = model.bufferViews[image.bufferView];
+      const auto& buffer = model.buffers[view.buffer];
+      const unsigned char* ptr = buffer.data.data() + view.byteOffset;
+
+      unsigned char* data =
+          stbi_load_from_memory(ptr, static_cast<int>(view.byteLength), &width,
+                                &height, &channels, 4);
+      if (data)
+      {
+        upload_image(data);
+        stbi_image_free(data);
+      }
+    }
+    else if (!image.image.empty())
+    {
+      width = image.width;
+      height = image.height;
+      channels = image.component;
+
+      // Make a mutable copy since Vulkan upload may need non-const data
+      std::vector<unsigned char> mutableImage(image.image.begin(),
+                                              image.image.end());
+      upload_image(mutableImage.data());
+    }
+  }
+  else
+  {
+    std::string path = image.uri;
+
+    // Load file into memory
+    std::ifstream file(path, std::ios::binary | std::ios::ate);
+    if (file)
+    {
+      std::streamsize size = file.tellg();
+      file.seekg(0, std::ios::beg);
+      std::vector<unsigned char> buffer(size);
+      if (file.read(reinterpret_cast<char*>(buffer.data()), size))
+      {
+        unsigned char* data = stbi_load_from_memory(
+            buffer.data(), static_cast<int>(buffer.size()), &width, &height,
+            &channels, 4);
+        if (data)
+        {
+          upload_image(data);
+          stbi_image_free(data);
+        }
+      }
+    }
+  }
+
+  if (newImage.image == VK_NULL_HANDLE)
+    return {};
+  return newImage;
+}
+
 VkFilter extract_filter(int32_t filter)
 {
   switch (filter)
@@ -320,11 +392,24 @@ std::optional<std::shared_ptr<hm::LoadedGLTF>> hm::loadGltf(
   std::vector<AllocatedImage> images;
   std::vector<std::shared_ptr<GLTFMaterial>> materials;
 
+  // load all textures
   for (auto& image : model.images)
   {
-    images.push_back(_errorCheckerboardImage);
-  }
+    std::optional<AllocatedImage> img = load_image(model, image);
 
+    if (img.has_value())
+    {
+      images.push_back(*img);
+      file.images[image.name.c_str()] = *img;
+    }
+    else
+    {
+      // we failed to load, so lets give the slot a default white texture to not
+      // completely break loading
+      images.push_back(_errorCheckerboardImage);
+      log::Error("Gltf failed to load texture {}", image.name);
+    }
+  }
   // create buffer to hold the material data
   file.materialDataBuffer = create_buffer(
       sizeof(GLTFMetallic_Roughness::MaterialConstants) *
@@ -618,4 +703,29 @@ void LoadedGLTF::Draw(const glm::mat4& topMatrix, DrawContext& ctx)
     n->Draw(topMatrix, ctx);
   }
 }
-void LoadedGLTF::clearAll() {}
+void LoadedGLTF::clearAll(VkDevice dv)
+{
+  descriptorPool.destroy_pools(dv);
+  destroy_buffer(materialDataBuffer);
+
+  for (auto& [k, v] : meshes)
+  {
+    destroy_buffer(v->meshBuffers.indexBuffer);
+    destroy_buffer(v->meshBuffers.vertexBuffer);
+  }
+
+  for (auto& [k, v] : images)
+  {
+    if (v.image == _errorCheckerboardImage.image)
+    {
+      // dont destroy the default images
+      continue;
+    }
+    destroy_image(v);
+  }
+
+  for (auto& sampler : samplers)
+  {
+    vkDestroySampler(dv, sampler, nullptr);
+  }
+}
