@@ -22,6 +22,7 @@
 
 #define VMA_IMPLEMENTATION
 
+#include "camera.hpp"
 #include "vk_mem_alloc.h"
 
 #include "backends/imgui_impl_sdl3.h"
@@ -116,11 +117,9 @@ GPUMeshBuffers rectangle;
 void init_mesh_pipeline();
 
 void create_swapchain(uint32_t width, uint32_t height);
-AllocatedBuffer create_buffer(size_t allocSize, VkBufferUsageFlags usage,
-                              VmaMemoryUsage memoryUsage);
 
 void destroy_swapchain();
-void destroy_buffer(const AllocatedBuffer& buffer);
+
 // shuts down the engine
 void cleanup();
 void draw_background(VkCommandBuffer cmd);
@@ -140,65 +139,63 @@ GPUSceneData sceneData;
 
 VkDescriptorSetLayout _gpuSceneDataDescriptorLayout;
 
-// textures
-AllocatedImage create_image(VkExtent3D size, VkFormat format,
-                            VkImageUsageFlags usage, bool mipmapped = false);
-AllocatedImage create_image(void* data, VkExtent3D size, VkFormat format,
-                            VkImageUsageFlags usage, bool mipmapped = false);
-void destroy_image(const AllocatedImage& img);
-
-AllocatedImage _whiteImage;
-AllocatedImage _blackImage;
-AllocatedImage _greyImage;
-AllocatedImage _errorCheckerboardImage;
-
-VkSampler _defaultSamplerLinear;
-VkSampler _defaultSamplerNearest;
-VkDescriptorSetLayout _singleImageDescriptorLayout;
-
-struct GLTFMetallic_Roughness
-{
-  MaterialPipeline opaquePipeline;
-  MaterialPipeline transparentPipeline;
-
-  VkDescriptorSetLayout materialLayout;
-
-  struct MaterialConstants
-  {
-    glm::vec4 colorFactors;
-    glm::vec4 metal_rough_factors;
-    // padding, we need it anyway for uniform buffers
-    glm::vec4 extra[14];
-  };
-
-  struct MaterialResources
-  {
-    AllocatedImage colorImage;
-    VkSampler colorSampler;
-    AllocatedImage metalRoughImage;
-    VkSampler metalRoughSampler;
-    VkBuffer dataBuffer;
-    uint32_t dataBufferOffset;
-  };
-
-  DescriptorWriter writer;
-
-  void build_pipelines();
-  void clear_resources(VkDevice device);
-
-  MaterialInstance write_material(
-      VkDevice device, MaterialPass pass, const MaterialResources& resources,
-      DescriptorAllocatorGrowable& descriptorAllocator);
-};
 MaterialInstance defaultData;
-GLTFMetallic_Roughness metalRoughMaterial;
+
 DrawContext mainDrawContext;
 std::unordered_map<std::string, std::shared_ptr<Node>> loadedNodes;
 
-void update_scene();
+Camera mainCamera;
+void update_scene(Camera& mainCamera);
+
+std::unordered_map<std::string, std::shared_ptr<LoadedGLTF>> loadedScenes;
 } // namespace hm::internal
 using namespace hm;
 using namespace hm::internal;
+bool is_visible(const RenderObject& obj, const glm::mat4& viewproj)
+{
+  std::array<glm::vec3, 8> corners {
+      glm::vec3 {1, 1, 1},   glm::vec3 {1, 1, -1},   glm::vec3 {1, -1, 1},
+      glm::vec3 {1, -1, -1}, glm::vec3 {-1, 1, 1},   glm::vec3 {-1, 1, -1},
+      glm::vec3 {-1, -1, 1}, glm::vec3 {-1, -1, -1},
+  };
+
+  glm::mat4 matrix = viewproj * obj.transform;
+
+  glm::vec3 min = {1.5, 1.5, 1.5};
+  glm::vec3 max = {-1.5, -1.5, -1.5};
+
+  for (int c = 0; c < 8; c++)
+  {
+    // project each corner into clip space
+    glm::vec4 v =
+        matrix *
+        glm::vec4(obj.bounds.origin + (corners[c] * obj.bounds.extents), 1.f);
+
+    // perspective correction
+    v.x = v.x / v.w;
+    v.y = v.y / v.w;
+    v.z = v.z / v.w;
+
+    min = glm::min(glm::vec3 {v.x, v.y, v.z}, min);
+    max = glm::max(glm::vec3 {v.x, v.y, v.z}, max);
+  }
+
+  // check the clip space box is within the view
+  if (min.z > 1.f || max.z < 0.f || min.x > 1.f || max.x < -1.f ||
+      min.y > 1.f || max.y < -1.f)
+  {
+    return false;
+  }
+  else
+  {
+    return true;
+  }
+}
+
+void hm::Device::processSDLEvent(SDL_Event& e)
+{
+  mainCamera.processSDLEvent(e);
+}
 void Device::Initialize()
 {
   SDL_WindowFlags window_flags = SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE;
@@ -213,6 +210,12 @@ void Device::Initialize()
   init_descriptors();
   init_pipelines();
   init_default_data();
+  mainCamera.velocity = glm::vec3(0.f);
+  mainCamera.position = glm::vec3(0, 0, 5);
+
+  mainCamera.pitch = 0;
+  mainCamera.yaw = 0;
+
   InitImGui();
 
   // everything went fine
@@ -232,12 +235,21 @@ void Device::PreRender()
   ImGui::NewFrame();
   ChangeGraphicsBackend();
 }
+
 Device::~Device() {}
 
 void Device::Render()
 {
   // some imgui UI to test
   ImGui::ShowDemoWindow();
+  ImGui::Begin("Stats");
+
+  ImGui::Text("frametime %f ms", stats.frametime);
+  ImGui::Text("draw time %f ms", stats.mesh_draw_time);
+  ImGui::Text("update time %f ms", stats.scene_update_time);
+  ImGui::Text("triangles %i", stats.triangle_count);
+  ImGui::Text("draws %i", stats.drawcall_count);
+  ImGui::End();
   if (ImGui::Begin("background"))
   {
     ImGui::SliderFloat("Render Scale", &renderScale, 0.3f, 1.f);
@@ -259,7 +271,7 @@ void Device::Render()
   ImGui::Render();
   // wait until the gpu has finished rendering the last frame. Timeout of 1
   // second
-  update_scene();
+  update_scene(mainCamera);
   VK_CHECK(vkWaitForFences(_device, 1, &get_current_frame()._renderFence, true,
                            1000000000));
 
@@ -459,7 +471,11 @@ void internal::cleanup()
     ImGui::DestroyContext();
     // make sure the gpu has stopped doing its things
     vkDeviceWaitIdle(_device);
-
+    for (auto& scene : loadedScenes)
+    {
+      scene.second->clearAll(_device);
+    }
+    loadedScenes.clear();
     // free per-frame structures and deletion queue
     for (int i = 0; i < FRAME_OVERLAP; i++)
     {
@@ -516,6 +532,12 @@ void internal::draw_background(VkCommandBuffer cmd)
 }
 void internal::draw_geometry(VkCommandBuffer cmd)
 {
+  // reset counters
+  stats.drawcall_count = 0;
+  stats.triangle_count = 0;
+  // begin clock
+  auto start = std::chrono::system_clock::now();
+
   // allocate a new uniform buffer for the scene data
   AllocatedBuffer gpuSceneDataBuffer =
       create_buffer(sizeof(GPUSceneData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
@@ -557,54 +579,118 @@ void internal::draw_geometry(VkCommandBuffer cmd)
 
   vkCmdBeginRendering(cmd, &renderInfo);
 
-  // vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, _trianglePipeline);
+  std::vector<uint32_t> opaque_draws;
+  opaque_draws.reserve(mainDrawContext.OpaqueSurfaces.size());
 
-  // set dynamic viewport and scissor
-  VkViewport viewport = {};
-  viewport.x = 0;
-  viewport.y = 0;
-  viewport.width = _drawExtent.width;
-  viewport.height = _drawExtent.height;
-  viewport.minDepth = 0.f;
-  viewport.maxDepth = 1.f;
-
-  vkCmdSetViewport(cmd, 0, 1, &viewport);
-
-  VkRect2D scissor = {};
-  scissor.offset.x = 0;
-  scissor.offset.y = 0;
-  scissor.extent.width = _drawExtent.width;
-  scissor.extent.height = _drawExtent.height;
-
-  vkCmdSetScissor(cmd, 0, 1, &scissor);
-  // vkCmdDraw(cmd, 3, 1, 0, 0);
-  for (const RenderObject& draw : mainDrawContext.OpaqueSurfaces)
+  for (int i = 0; i < mainDrawContext.OpaqueSurfaces.size(); i++)
   {
-    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                      draw.material->pipeline->pipeline);
-    vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                            draw.material->pipeline->layout, 0, 1,
-                            &globalDescriptor, 0, nullptr);
-    vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                            draw.material->pipeline->layout, 1, 1,
-                            &draw.material->materialSet, 0, nullptr);
+    if (is_visible(mainDrawContext.OpaqueSurfaces[i], sceneData.viewproj))
+    {
+      opaque_draws.push_back(i);
+    }
+  }
 
-    vkCmdBindIndexBuffer(cmd, draw.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+  // sort the opaque surfaces by material and mesh
+  std::sort(opaque_draws.begin(), opaque_draws.end(),
+            [&](const auto& iA, const auto& iB)
+            {
+              const RenderObject& A = mainDrawContext.OpaqueSurfaces[iA];
+              const RenderObject& B = mainDrawContext.OpaqueSurfaces[iB];
+              if (A.material == B.material)
+              {
+                return A.indexBuffer < B.indexBuffer;
+              }
+              else
+              {
+                return A.material < B.material;
+              }
+            });
 
-    GPUDrawPushConstants pushConstants;
-    pushConstants.vertexBuffer = draw.vertexBufferAddress;
-    pushConstants.worldMatrix = draw.transform;
-    vkCmdPushConstants(cmd, draw.material->pipeline->layout,
+  // defined outside of the draw function, this is the state we will try to skip
+  MaterialPipeline* lastPipeline = nullptr;
+  MaterialInstance* lastMaterial = nullptr;
+  VkBuffer lastIndexBuffer = VK_NULL_HANDLE;
+
+  auto draw = [&](const RenderObject& r)
+  {
+    if (r.material != lastMaterial)
+    {
+      lastMaterial = r.material;
+      // rebind pipeline and descriptors if the material changed
+      if (r.material->pipeline != lastPipeline)
+      {
+        lastPipeline = r.material->pipeline;
+        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                          r.material->pipeline->pipeline);
+        vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                r.material->pipeline->layout, 0, 1,
+                                &globalDescriptor, 0, nullptr);
+
+        VkViewport viewport = {};
+        viewport.x = 0;
+        viewport.y = 0;
+        viewport.width = (float)_windowExtent.width;
+        viewport.height = (float)_windowExtent.height;
+        viewport.minDepth = 0.f;
+        viewport.maxDepth = 1.f;
+
+        vkCmdSetViewport(cmd, 0, 1, &viewport);
+
+        VkRect2D scissor = {};
+        scissor.offset.x = 0;
+        scissor.offset.y = 0;
+        scissor.extent.width = _windowExtent.width;
+        scissor.extent.height = _windowExtent.height;
+
+        vkCmdSetScissor(cmd, 0, 1, &scissor);
+      }
+
+      vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                              r.material->pipeline->layout, 1, 1,
+                              &r.material->materialSet, 0, nullptr);
+    }
+    // rebind index buffer if needed
+    if (r.indexBuffer != lastIndexBuffer)
+    {
+      lastIndexBuffer = r.indexBuffer;
+      vkCmdBindIndexBuffer(cmd, r.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+    }
+    // calculate final mesh matrix
+    GPUDrawPushConstants push_constants;
+    push_constants.worldMatrix = r.transform;
+    push_constants.vertexBuffer = r.vertexBufferAddress;
+
+    vkCmdPushConstants(cmd, r.material->pipeline->layout,
                        VK_SHADER_STAGE_VERTEX_BIT, 0,
-                       sizeof(GPUDrawPushConstants), &pushConstants);
+                       sizeof(GPUDrawPushConstants), &push_constants);
 
-    vkCmdDrawIndexed(cmd, draw.indexCount, 1, draw.firstIndex, 0, 0);
+    vkCmdDrawIndexed(cmd, r.indexCount, 1, r.firstIndex, 0, 0);
+    // stats
+    stats.drawcall_count++;
+    stats.triangle_count += r.indexCount / 3;
+  };
+
+  for (auto& r : opaque_draws)
+  {
+    draw(mainDrawContext.OpaqueSurfaces[r]);
+  }
+
+  for (auto& r : mainDrawContext.TransparentSurfaces)
+  {
+    draw(r);
   }
 
   vkCmdEndRendering(cmd);
+
+  auto end = std::chrono::system_clock::now();
+
+  // convert to microseconds (integer), and then come back to miliseconds
+  auto elapsed =
+      std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+  stats.mesh_draw_time = elapsed.count() / 1000.f;
 }
-AllocatedImage internal::create_image(VkExtent3D size, VkFormat format,
-                                      VkImageUsageFlags usage, bool mipmapped)
+AllocatedImage hm::create_image(VkExtent3D size, VkFormat format,
+                                VkImageUsageFlags usage, bool mipmapped)
 {
   AllocatedImage newImage;
   newImage.imageFormat = format;
@@ -646,9 +732,8 @@ AllocatedImage internal::create_image(VkExtent3D size, VkFormat format,
 
   return newImage;
 }
-AllocatedImage internal::create_image(void* data, VkExtent3D size,
-                                      VkFormat format, VkImageUsageFlags usage,
-                                      bool mipmapped)
+AllocatedImage hm::create_image(void* data, VkExtent3D size, VkFormat format,
+                                VkImageUsageFlags usage, bool mipmapped)
 {
   size_t data_size = size.depth * size.width * size.height * 4;
   AllocatedBuffer uploadbuffer = create_buffer(
@@ -684,16 +769,25 @@ AllocatedImage internal::create_image(void* data, VkExtent3D size,
                                VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1,
                                &copyRegion);
 
-        vkutil::transition_image(cmd, new_image.image,
-                                 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                                 VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        if (mipmapped)
+        {
+          vkutil::generate_mipmaps(cmd, new_image.image,
+                                   VkExtent2D {new_image.imageExtent.width,
+                                               new_image.imageExtent.height});
+        }
+        else
+        {
+          vkutil::transition_image(cmd, new_image.image,
+                                   VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                                   VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        }
       });
 
   destroy_buffer(uploadbuffer);
 
   return new_image;
 }
-void internal::destroy_image(const AllocatedImage& img)
+void hm::destroy_image(const AllocatedImage& img)
 {
   vkDestroyImageView(_device, img.imageView, nullptr);
   vmaDestroyImage(_allocator, img.image, img.allocation);
@@ -810,23 +904,31 @@ MaterialInstance GLTFMetallic_Roughness::write_material(
 
   return matData;
 }
-void internal::update_scene()
+void internal::update_scene(Camera& mainCamera)
 {
+  auto start = std::chrono::system_clock::now();
   mainDrawContext.OpaqueSurfaces.clear();
+  mainDrawContext.TransparentSurfaces.clear();
+  loadedScenes["structure"]->Draw(glm::mat4 {1.f}, mainDrawContext);
 
   loadedNodes["Suzanne"]->Draw(glm::mat4 {1.f}, mainDrawContext);
 
-  sceneData.view =
-      glm::translate(glm::identity<glm::mat4>(), glm::vec3 {0, 0, -5});
+  mainCamera.update();
+
+  glm::mat4 view = mainCamera.getViewMatrix();
+
   // camera projection
-  sceneData.proj = glm::perspective(
+  glm::mat4 projection = glm::perspective(
       glm::radians(70.f),
       (float)_windowExtent.width / (float)_windowExtent.height, 10000.f, 0.1f);
 
   // invert the Y direction on projection matrix so that we are more similar
   // to opengl and gltf axis
-  sceneData.proj[1][1] *= -1;
-  sceneData.viewproj = sceneData.proj * sceneData.view;
+  projection[1][1] *= -1;
+
+  sceneData.view = view;
+  sceneData.proj = projection;
+  sceneData.viewproj = projection * view;
 
   // some default lighting parameters
   sceneData.ambientColor = glm::vec4(.1f);
@@ -841,6 +943,12 @@ void internal::update_scene()
 
     loadedNodes["Cube"]->Draw(translation * scale, mainDrawContext);
   }
+  auto end = std::chrono::system_clock::now();
+
+  // convert to microseconds (integer), and then come back to miliseconds
+  auto elapsed =
+      std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+  stats.scene_update_time = elapsed.count() / 1000.f;
 }
 
 void internal::init_triangle_pipeline()
@@ -1420,6 +1528,13 @@ void internal::init_default_data()
 
     loadedNodes[m->name] = std::move(newNode);
   }
+
+  std::string structurePath = {io::GetPath("models/structure.glb")};
+  const auto structureFile = loadGltf(_device, structurePath);
+
+  assert(structureFile.has_value());
+
+  loadedScenes["structure"] = *structureFile;
 }
 void hm::Device::resize_swapchain()
 {
@@ -1540,9 +1655,8 @@ void internal::create_swapchain(uint32_t width, uint32_t height)
   _swapchainImages = vkbSwapchain.get_images().value();
   _swapchainImageViews = vkbSwapchain.get_image_views().value();
 }
-AllocatedBuffer internal::create_buffer(size_t allocSize,
-                                        VkBufferUsageFlags usage,
-                                        VmaMemoryUsage memoryUsage)
+AllocatedBuffer hm::create_buffer(size_t allocSize, VkBufferUsageFlags usage,
+                                  VmaMemoryUsage memoryUsage)
 {
   // allocate buffer
   VkBufferCreateInfo bufferInfo = {.sType =
@@ -1637,7 +1751,7 @@ void internal::destroy_swapchain()
     vkDestroyImageView(_device, _swapchainImageViews[i], nullptr);
   }
 }
-void internal::destroy_buffer(const AllocatedBuffer& buffer)
+void hm::destroy_buffer(const AllocatedBuffer& buffer)
 {
   vmaDestroyBuffer(_allocator, buffer.buffer, buffer.allocation);
 }

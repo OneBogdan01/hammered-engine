@@ -31,11 +31,11 @@ void Engine::Run()
 {
   while (m_device->m_shouldClose == false)
   {
+    auto start = std::chrono::system_clock::now();
     SDL_Event event;
 
     while (SDL_PollEvent(&event))
     {
-      ImGui_ImplSDL3_ProcessEvent(&event); // Forward your event to backend
       if (event.type == SDL_EVENT_QUIT ||
           (event.type == SDL_EVENT_KEY_DOWN && event.key.key == SDLK_ESCAPE))
       {
@@ -49,6 +49,8 @@ void Engine::Run()
       {
         m_device->m_shouldRender = false;
       }
+      m_device->processSDLEvent(event);
+      ImGui_ImplSDL3_ProcessEvent(&event); // Forward your event to backend
     }
     // do not draw if we are minimized
     if (m_device->m_shouldRender)
@@ -66,6 +68,11 @@ void Engine::Run()
     m_device->PreRender();
 
     m_device->Render();
+    auto end = std::chrono::system_clock::now();
+    // convert to microseconds (integer), and then come back to miliseconds
+    auto elapsed =
+        std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    stats.frametime = elapsed.count() / 1000.f;
   }
 }
 void Engine::Shutdown()

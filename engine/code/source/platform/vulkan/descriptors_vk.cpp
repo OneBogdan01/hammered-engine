@@ -2,6 +2,7 @@
 
 #include "volk.h"
 #include "platform/vulkan/types_vk.hpp"
+using namespace hm;
 void DescriptorLayoutBuilder::add_binding(uint32_t binding,
                                           VkDescriptorType type)
 {

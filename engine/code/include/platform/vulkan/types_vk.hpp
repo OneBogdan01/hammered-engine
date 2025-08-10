@@ -24,6 +24,9 @@ namespace hm
 {
 struct MeshAsset;
 }
+namespace hm
+{
+
 /**
  * @brief Helper function to convert a data type
  *        to string using output stream operator.
@@ -176,6 +179,12 @@ struct Node : public IRenderable
     }
   }
 };
+struct Bounds
+{
+  glm::vec3 origin;
+  float sphereRadius;
+  glm::vec3 extents;
+};
 struct RenderObject
 {
   uint32_t indexCount;
@@ -183,13 +192,14 @@ struct RenderObject
   VkBuffer indexBuffer;
 
   MaterialInstance* material;
-
+  Bounds bounds;
   glm::mat4 transform;
   VkDeviceAddress vertexBufferAddress;
 };
 struct DrawContext
 {
   std::vector<RenderObject> OpaqueSurfaces {};
+  std::vector<RenderObject> TransparentSurfaces;
 };
 struct MeshNode : public Node
 {
@@ -207,3 +217,5 @@ struct MeshNode : public Node
       throw std::runtime_error("Detected Vulkan error: " + to_string(err)); \
     }                                                                       \
   } while (0)
+
+} // namespace hm
