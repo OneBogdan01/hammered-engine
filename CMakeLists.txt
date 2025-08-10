@@ -41,7 +41,6 @@ add_subdirectory(game)
 # Sets up the backends .exes
 add_game_backends("${GAME_BACKENDS}")
 
-# Set the Visual Studio startup project to the first enabled backend executable
-list(GET GAME_BACKENDS 0 first_backend)
-set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT "game_${first_backend}")
+
+set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT "game_vk")
 

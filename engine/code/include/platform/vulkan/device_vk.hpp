@@ -116,6 +116,7 @@ struct GLTFMetallic_Roughness
       VkDevice device, MaterialPass pass, const MaterialResources& resources,
       DescriptorAllocatorGrowable& descriptorAllocator);
 };
+
 inline GLTFMetallic_Roughness metalRoughMaterial;
 // textures
 AllocatedImage create_image(VkExtent3D size, VkFormat format,

@@ -31,6 +31,7 @@ void Engine::Run()
 {
   while (m_device->m_shouldClose == false)
   {
+    auto start = std::chrono::system_clock::now();
     SDL_Event event;
 
     while (SDL_PollEvent(&event))
@@ -67,6 +68,11 @@ void Engine::Run()
     m_device->PreRender();
 
     m_device->Render();
+    auto end = std::chrono::system_clock::now();
+    // convert to microseconds (integer), and then come back to miliseconds
+    auto elapsed =
+        std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    stats.frametime = elapsed.count() / 1000.f;
   }
 }
 void Engine::Shutdown()

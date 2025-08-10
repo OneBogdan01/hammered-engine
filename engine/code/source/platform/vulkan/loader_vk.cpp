@@ -54,7 +54,7 @@ std::optional<AllocatedImage> load_image(const tinygltf::Model& model,
   {
     VkExtent3D imagesize {(uint32_t)width, (uint32_t)height, 1};
     newImage = create_image(pixels, imagesize, VK_FORMAT_R8G8B8A8_UNORM,
-                            VK_IMAGE_USAGE_SAMPLED_BIT, false);
+                            VK_IMAGE_USAGE_SAMPLED_BIT, true);
   };
 
   if (image.uri.empty())
@@ -73,17 +73,6 @@ std::optional<AllocatedImage> load_image(const tinygltf::Model& model,
         upload_image(data);
         stbi_image_free(data);
       }
-    }
-    else if (!image.image.empty())
-    {
-      width = image.width;
-      height = image.height;
-      channels = image.component;
-
-      // Make a mutable copy since Vulkan upload may need non-const data
-      std::vector<unsigned char> mutableImage(image.image.begin(),
-                                              image.image.end());
-      upload_image(mutableImage.data());
     }
   }
   else
@@ -339,11 +328,18 @@ void MeshNode::Draw(const glm::mat4& topMatrix, DrawContext& ctx)
     def.firstIndex = s.startIndex;
     def.indexBuffer = mesh->meshBuffers.indexBuffer.buffer;
     def.material = &s.material->data;
-
+    def.bounds = s.bounds;
     def.transform = nodeMatrix;
     def.vertexBufferAddress = mesh->meshBuffers.vertexBufferAddress;
 
-    ctx.OpaqueSurfaces.push_back(def);
+    if (s.material->data.passType == MaterialPass::Transparent)
+    {
+      ctx.TransparentSurfaces.push_back(def);
+    }
+    else
+    {
+      ctx.OpaqueSurfaces.push_back(def);
+    }
   }
 
   // recurse down
@@ -567,6 +563,18 @@ std::optional<std::shared_ptr<hm::LoadedGLTF>> hm::loadGltf(
           vert.position.z = data[index * 3 + 2];
           vertices[initialVtx + index] = vert;
         }
+        // get bounds of mesh
+        glm::vec3 minpos(static_cast<float>(accessor.minValues[0]),
+                         static_cast<float>(accessor.minValues[1]),
+                         static_cast<float>(accessor.minValues[2]));
+
+        glm::vec3 maxpos(static_cast<float>(accessor.maxValues[0]),
+                         static_cast<float>(accessor.maxValues[1]),
+                         static_cast<float>(accessor.maxValues[2]));
+
+        newSurface.bounds.origin = (maxpos + minpos) * 0.5f;
+        newSurface.bounds.extents = (maxpos - minpos) * 0.5f;
+        newSurface.bounds.sphereRadius = glm::length(newSurface.bounds.extents);
       }
       {
         auto iterator = primitive.attributes.find("NORMAL");
@@ -650,6 +658,7 @@ std::optional<std::shared_ptr<hm::LoadedGLTF>> hm::loadGltf(
       {
         newSurface.material = materials[0];
       }
+
       newmesh->surfaces.push_back(newSurface);
     }
 
