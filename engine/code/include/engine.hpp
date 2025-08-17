@@ -1,7 +1,12 @@
 #pragma once
-#include "core/device.hpp"
+
+namespace hm::ecs
+{
+class EntityComponentSystem;
+}
 namespace hm
 {
+class Device;
 
 class Engine
 {
@@ -21,8 +26,10 @@ class Engine
   void Shutdown();
 
   Device& GetDevice() const { return *m_device; }
+  ecs::EntityComponentSystem& GetECS() { return *m_ecs; };
 
  private:
   Device* m_device {nullptr};
+  ecs::EntityComponentSystem* m_ecs {nullptr};
 };
 } // namespace hm

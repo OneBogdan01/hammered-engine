@@ -1,7 +1,6 @@
 #pragma once
 
 #include <string_view>
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
 
 #include <SDL3/SDL_events.h>
 #include <glm/glm.hpp>

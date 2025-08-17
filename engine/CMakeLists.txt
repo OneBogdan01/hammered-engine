@@ -15,7 +15,7 @@ foreach(backend ${GAME_BACKENDS})
             SDL3::SDL3
             imgui_core
             tinygltf
-            ktx
+            EnTT
     )
 
     # Backend-specific libraries
@@ -35,6 +35,10 @@ foreach(backend ${GAME_BACKENDS})
                 
         )
     endif()
+
+    target_precompile_headers(${engine_target} PUBLIC
+        "$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/code/include/pch.hpp>"
+    )
     # Set Visual Studio folder
     set_target_properties(${engine_target} PROPERTIES FOLDER "engine")
 endforeach()
