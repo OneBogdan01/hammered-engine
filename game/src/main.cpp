@@ -5,6 +5,8 @@
 int main()
 {
   auto& engineInstance = hm::Engine::Instance();
+
+  engineInstance.Instance();
   engineInstance.Init();
   engineInstance.Run();
   engineInstance.Shutdown();

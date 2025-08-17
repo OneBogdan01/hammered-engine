@@ -70,9 +70,7 @@ elseif (VKB_WSI_SELECTION STREQUAL WAYLAND)
 endif()
 set_property(TARGET volk PROPERTY FOLDER "engine/external")
 
-# Header-only libraries
-add_library(vma INTERFACE)
-target_include_directories(vma INTERFACE vma)
+
 
 # glm
 add_library(glm INTERFACE)
@@ -217,6 +215,13 @@ target_include_directories(ktx SYSTEM PUBLIC ${KTX_INCLUDE_DIRS})
 target_link_libraries(ktx PUBLIC vulkan)
 
 set_target_properties(ktx PROPERTIES FOLDER "engine/external" POSITION_INDEPENDENT_CODE ON)
+# Header-only libraries
+add_library(vma INTERFACE)
+target_include_directories(vma INTERFACE vma)
+
+# entt
+add_library(EnTT INTERFACE)
+target_include_directories(EnTT INTERFACE entt)
 
 # fmt
 add_subdirectory(fmt)
