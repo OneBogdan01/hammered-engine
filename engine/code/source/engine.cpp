@@ -1,10 +1,16 @@
 #include "engine.hpp"
 
 #include "core/ecs.hpp"
-#include "core/fileio.hpp"
 #include "core/input.hpp"
 #include "camera.hpp"
 #include "utility/console.hpp"
+
+
+#include <SDL3/SDL_events.h>
+
+#include "utility/console.hpp"
+
+#include <backends/imgui_impl_sdl3.h>
 
 using namespace hm;
 using namespace hm::log;
