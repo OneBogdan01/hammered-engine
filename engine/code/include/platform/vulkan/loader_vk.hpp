@@ -1,6 +1,6 @@
 ﻿#pragma once
 #include "descriptors_vk.hpp"
-#include "tiny_gltf.h"
+
 #include "types_vk.hpp"
 
 #include <unordered_map>

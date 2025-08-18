@@ -1,18 +1,12 @@
 ﻿
 #include "platform/vulkan/loader_vk.hpp"
 // TODO replace with ktx
-#include "stb_image.h"
-#include <iostream>
 
-#define TINYGLTF_IMPLEMENTATION
-// TODO replace with ktx
-#define STB_IMAGE_IMPLEMENTATION
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include <tiny_gltf.h>
+#include "SDL3/SDL_assert.h"
 
 #include "utility/console.hpp"
-#include <iostream>
-
+#include <tiny_gltf.h>
+#include <stb_image.h>
 #include <volk.h>
 #include "platform/vulkan/device_vk.hpp"
 
@@ -483,7 +477,7 @@ std::optional<std::shared_ptr<hm::LoadedGLTF>> hm::loadGltf(
           model.textures[mat.pbrMetallicRoughness.baseColorTexture.index];
 
       size_t img = tex.source;
-      assert(tex.sampler >= 0);
+      SDL_assert(tex.sampler >= 0);
 
       size_t sampler = tex.sampler;
 
