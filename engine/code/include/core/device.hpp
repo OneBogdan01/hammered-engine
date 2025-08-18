@@ -1,10 +1,7 @@
 #pragma once
 
-#include <string_view>
-
 #include <SDL3/SDL_events.h>
-#include <glm/glm.hpp>
-
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
 class Camera;
 namespace hm
 {

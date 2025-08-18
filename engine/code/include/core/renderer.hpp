@@ -6,7 +6,10 @@ namespace hm::gpx
 
 class Renderer : public ecs::System
 {
- protected:
+ public:
+  explicit Renderer(const std::string& name) : System(name) {}
   void Update(f32) override;
+
+  void Render() override;
 };
 } // namespace hm::gpx

@@ -1,20 +1,17 @@
 #include "engine.hpp"
 
+#include "core/ecs.hpp"
 #include "core/fileio.hpp"
 
 #include <SDL3/SDL_events.h>
 
-#include <cassert>
-
 #include "utility/console.hpp"
 
-#include <fstream>
-#include <thread>
 #include <backends/imgui_impl_sdl3.h>
-#include <SDL3/SDL_filesystem.h>
 
 using namespace hm;
 using namespace hm::log;
+using namespace hm::ecs;
 
 Engine& Engine::Instance()
 {
@@ -25,6 +22,7 @@ Engine& Engine::Instance()
 void Engine::Init()
 {
   m_device = new Device();
+  m_ecs = new EntityComponentSystem();
 }
 
 void Engine::Run()
@@ -32,6 +30,7 @@ void Engine::Run()
   while (m_device->m_shouldClose == false)
   {
     auto start = std::chrono::system_clock::now();
+    // move to input class
     SDL_Event event;
 
     while (SDL_PollEvent(&event))
@@ -52,6 +51,10 @@ void Engine::Run()
       m_device->processSDLEvent(event);
       ImGui_ImplSDL3_ProcessEvent(&event); // Forward your event to backend
     }
+
+    // TODO add delta time
+    m_ecs->UpdateSystems(0.1f);
+    m_ecs->RenderSystems();
     // do not draw if we are minimized
     if (m_device->m_shouldRender)
     {
@@ -78,5 +81,6 @@ void Engine::Run()
 void Engine::Shutdown()
 {
   delete m_device;
+  delete m_ecs;
   Info("Engine is closed");
 }
