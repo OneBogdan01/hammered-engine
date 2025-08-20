@@ -3,14 +3,15 @@
 #include "platform/opengl/device_gl.hpp"
 
 #include "core/fileio.hpp"
+#include "external/imgui_impl.hpp"
+#include "platform/opengl/imgui_impl_gl.hpp"
 #include "platform/opengl/opengl_gl.hpp"
 #include "platform/opengl/shader_gl.hpp"
 
 #include "utility/console.hpp"
 
 #include <vector>
-#include <backends/imgui_impl_opengl3.h>
-#include <backends/imgui_impl_sdl3.h>
+
 #include <glm/gtc/type_ptr.hpp>
 namespace hm::internal
 {
@@ -26,7 +27,7 @@ Device::~Device()
   DestroyBackend();
 }
 // TODO
-void Device::resize_swapchain() {}
+void Device::ResizeSwapchain() {}
 
 void Device::Initialize()
 {
@@ -73,13 +74,13 @@ void Device::Initialize()
   log::Info("OpenGL debug output enabled.");
 
 #endif
-  InitImGui();
+  external::ImGuiInitialize();
+  external::ImGuiInitializeOpenGL(window, glContext);
 }
 
 void Device::DestroyBackend()
 {
-  ImGui_ImplOpenGL3_Shutdown();
-  ImGui_ImplSDL3_Shutdown();
+  external::ImGuiCleanUp();
   SDL_GL_DestroyContext(glContext);
   SDL_DestroyWindow(window);
   SDL_Quit();
@@ -118,159 +119,147 @@ void RenderQuad()
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
   glBindVertexArray(0);
 }
-void Device::PreRender()
-{
-  ImGui_ImplOpenGL3_NewFrame();
-  ImGui_ImplSDL3_NewFrame();
-  ImGui::NewFrame();
-  ChangeGraphicsBackend();
-}
+// void Device::PreRender()
+//{
+//   ChangeGraphicsBackend();
+// }
 struct ComputeEffect
 {
   std::string name;
   Shader shader;
 };
-void Device::Render()
-{
-  ImGui::ShowDemoWindow(); // Show demo window! :)
-  struct Constants
-  {
-    glm::vec4 data1 = glm::vec4(1.0, 0.0, 0.0, 1.0);
-    glm::vec4 data2 = glm::vec4(0.0, 0.0, 1.0, 1.0);
-    glm::vec4 data3 = glm::vec4(0.0, 0.0, 1.0, 1.0);
-    glm::vec4 data4 = glm::vec4(1.0, 1.0, 0.0, 1.0);
-  };
+  // void Device::Render()
+  //{
+  //  // move to render
+  //  ImGui::ShowDemoWindow(); // Show demo window! :)
+  //  struct Constants
+  //  {
+  //    glm::vec4 data1 = glm::vec4(1.0, 0.0, 0.0, 1.0);
+  //    glm::vec4 data2 = glm::vec4(0.0, 0.0, 1.0, 1.0);
+  //    glm::vec4 data3 = glm::vec4(0.0, 0.0, 1.0, 1.0);
+  //    glm::vec4 data4 = glm::vec4(1.0, 1.0, 0.0, 1.0);
+  //  };
+  //
+  //  // Sample values (you can hook these into ImGui like in your comments)
+  //  static Constants constants {};
+  //  static int currentBackgroundEffect = 0;
+  //  static std::vector<ComputeEffect> backgroundEffects;
+  //
+  //  if (ImGui::Begin("background"))
+  //  {
+  //    if (!backgroundEffects.empty())
+  //    {
+  //      ComputeEffect& selected = backgroundEffects[currentBackgroundEffect];
+  //
+  //      ImGui::Text("Selected effect: %s", selected.name.c_str());
+  //      ImGui::SliderInt("Effect Index", &currentBackgroundEffect, 0,
+  //                       static_cast<int>(backgroundEffects.size()) - 1);
+  //    }
+  //
+  //    ImGui::InputFloat4("data1", (float*)&constants.data1);
+  //    ImGui::InputFloat4("data2", (float*)&constants.data2);
+  //    ImGui::InputFloat4("data3", (float*)&constants.data3);
+  //    ImGui::InputFloat4("data4", (float*)&constants.data4);
+  //  }
+  //  ImGui::End();
+  //
+  //  glClearColor(1, 0, 0, 1.0f);
+  //  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  //
+  //  // TODO make it so it defaults to glsl in case it is not supported
+  //
+  //  static Shader
+  //  triangle({io::GetPath("shaders/colored_triangle.vert.gl.spv"),
+  //                          io::GetPath("shaders/colored_triangle.frag.gl.spv")});
+  //  static Shader quadShader({io::GetPath("shaders/screen_quad.vert.gl.spv"),
+  //                            io::GetPath("shaders/screen_quad.frag.gl.spv")});
+  //  static ShaderPaths gradient;
+  //  static ShaderPaths sky;
+  //
+  //  static bool once {true};
+  //  // Memory leak
+  //  static GLuint vao {};
+  //  static glm::mat4 camMatrix {glm::mat4(1.0f)};
+  //  static unsigned int texture;
+  //  static GLuint uboConstants;
+  //
+  //  if (once)
+  //  {
+  //    glGenBuffers(1, &uboConstants);
+  //    glBindBuffer(GL_UNIFORM_BUFFER, uboConstants);
+  //    glBufferData(GL_UNIFORM_BUFFER, sizeof(glm::vec4) * 4, nullptr,
+  //                 GL_DYNAMIC_DRAW);
+  //    glBindBufferBase(GL_UNIFORM_BUFFER, 1,
+  //                     uboConstants); // Bind to binding = 1 in GLSL
+  //
+  //    gradient.Compute = io::GetPath("shaders/gradient_color.comp.gl.spv");
+  //    sky.Compute = io::GetPath("shaders/sky.comp.gl.spv");
+  //    // texture
+  //    //   Create texture for opengl operation
+  //    //   -----------------------------------
+  //
+  //    glGenTextures(1, &texture);
+  //    glActiveTexture(GL_TEXTURE0);
+  //    glBindTexture(GL_TEXTURE_2D, texture);
+  //    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  //    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  //    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  //    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  //    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, m_windowSize.x,
+  //    m_windowSize.y,
+  //                 0, GL_RGBA, GL_FLOAT, NULL);
+  //
+  //    glBindImageTexture(0, texture, 0, GL_FALSE, 0, GL_READ_WRITE,
+  //    GL_RGBA16F);
+  //
+  //    glActiveTexture(GL_TEXTURE0);
+  //    glBindTexture(GL_TEXTURE_2D, texture);
+  //
+  //    camMatrix = glm::scale(camMatrix, {1.0f, -1.f, 1.0f});
+  //
+  //    glGenVertexArrays(1, &vao);
+  //
+  //    static Shader gradientShader {gradient};
+  //    static Shader skyShader {sky};
+  //    static ComputeEffect grad {"Gradient", gradientShader};
+  //    static ComputeEffect sk {"Sky", skyShader};
+  //    backgroundEffects.reserve(2);
+  //    backgroundEffects.push_back(grad);
+  //    backgroundEffects.push_back(sk);
+  //    // upload matrix
+  //    once = false;
+  //  }
+  //  // Update UBO
+  //  glBindBuffer(GL_UNIFORM_BUFFER, uboConstants);
+  //  glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(Constants), &constants);
+  //  // compute
+  //
+  //  static GLint loc = glGetUniformLocation(triangle.m_programId,
+  //  "uViewProj");
+  //  backgroundEffects[currentBackgroundEffect].shader.Activate();
+  //  GLuint groupCountX = (m_windowSize.x + 16 - 1) / 16;
+  //  GLuint groupCountY = (m_windowSize.y + 16 - 1) / 16;
+  //  glDispatchCompute(groupCountX, groupCountY, 1);
+  //
+  //  // make sure writing to image has finished before read
+  //  glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+  //  static GLint locQuad =
+  //      glGetUniformLocation(quadShader.m_programId, "uViewProj");
+  //
+  //  quadShader.Activate();
+  //  glUniformMatrix4fv(locQuad, 1, GL_FALSE, glm::value_ptr(camMatrix));
+  //  RenderQuad();
+  //  triangle.Activate();
+  //  glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(camMatrix));
+  //  glBindVertexArray(vao);
+  //  // Draw 3 vertices to form your triangle
+  //  glDrawArrays(GL_TRIANGLES, 0, 3);
+  //  glBindVertexArray(0);
+  //
+  //  // this stays in device
+  //  SDL_GL_SwapWindow(window);
+  //}
 
-  // Sample values (you can hook these into ImGui like in your comments)
-  static Constants constants {};
-  static int currentBackgroundEffect = 0;
-  static std::vector<ComputeEffect> backgroundEffects;
+  SDL_GLContextState* device::GetGlContext() { return glContext; }
 
-  if (ImGui::Begin("background"))
-  {
-    if (!backgroundEffects.empty())
-    {
-      ComputeEffect& selected = backgroundEffects[currentBackgroundEffect];
-
-      ImGui::Text("Selected effect: %s", selected.name.c_str());
-      ImGui::SliderInt("Effect Index", &currentBackgroundEffect, 0,
-                       static_cast<int>(backgroundEffects.size()) - 1);
-    }
-
-    ImGui::InputFloat4("data1", (float*)&constants.data1);
-    ImGui::InputFloat4("data2", (float*)&constants.data2);
-    ImGui::InputFloat4("data3", (float*)&constants.data3);
-    ImGui::InputFloat4("data4", (float*)&constants.data4);
-  }
-  ImGui::End();
-
-  glClearColor(1, 0, 0, 1.0f);
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-  // TODO make it so it defaults to glsl in case it is not supported
-
-  static Shader triangle({io::GetPath("shaders/colored_triangle.vert.gl.spv"),
-                          io::GetPath("shaders/colored_triangle.frag.gl.spv")});
-  static Shader quadShader({io::GetPath("shaders/screen_quad.vert.gl.spv"),
-                            io::GetPath("shaders/screen_quad.frag.gl.spv")});
-  static ShaderPaths gradient;
-  static ShaderPaths sky;
-
-  static bool once {true};
-  // Memory leak
-  static GLuint vao {};
-  static glm::mat4 camMatrix {glm::mat4(1.0f)};
-  static unsigned int texture;
-  static GLuint uboConstants;
-
-  if (once)
-  {
-    glGenBuffers(1, &uboConstants);
-    glBindBuffer(GL_UNIFORM_BUFFER, uboConstants);
-    glBufferData(GL_UNIFORM_BUFFER, sizeof(glm::vec4) * 4, nullptr,
-                 GL_DYNAMIC_DRAW);
-    glBindBufferBase(GL_UNIFORM_BUFFER, 1,
-                     uboConstants); // Bind to binding = 1 in GLSL
-
-    gradient.Compute = io::GetPath("shaders/gradient_color.comp.gl.spv");
-    sky.Compute = io::GetPath("shaders/sky.comp.gl.spv");
-    // texture
-    //   Create texture for opengl operation
-    //   -----------------------------------
-
-    glGenTextures(1, &texture);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, m_windowSize.x, m_windowSize.y,
-                 0, GL_RGBA, GL_FLOAT, NULL);
-
-    glBindImageTexture(0, texture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA16F);
-
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texture);
-
-    camMatrix = glm::scale(camMatrix, {1.0f, -1.f, 1.0f});
-
-    glGenVertexArrays(1, &vao);
-
-    static Shader gradientShader {gradient};
-    static Shader skyShader {sky};
-    static ComputeEffect grad {"Gradient", gradientShader};
-    static ComputeEffect sk {"Sky", skyShader};
-    backgroundEffects.reserve(2);
-    backgroundEffects.push_back(grad);
-    backgroundEffects.push_back(sk);
-    // upload matrix
-    once = false;
-  }
-  // Update UBO
-  glBindBuffer(GL_UNIFORM_BUFFER, uboConstants);
-  glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(Constants), &constants);
-  // compute
-
-  static GLint loc = glGetUniformLocation(triangle.m_programId, "uViewProj");
-  backgroundEffects[currentBackgroundEffect].shader.Activate();
-  GLuint groupCountX = (m_windowSize.x + 16 - 1) / 16;
-  GLuint groupCountY = (m_windowSize.y + 16 - 1) / 16;
-  glDispatchCompute(groupCountX, groupCountY, 1);
-
-  // make sure writing to image has finished before read
-  glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
-  static GLint locQuad =
-      glGetUniformLocation(quadShader.m_programId, "uViewProj");
-
-  quadShader.Activate();
-  glUniformMatrix4fv(locQuad, 1, GL_FALSE, glm::value_ptr(camMatrix));
-  RenderQuad();
-  triangle.Activate();
-  glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(camMatrix));
-  glBindVertexArray(vao);
-  // Draw 3 vertices to form your triangle
-  glDrawArrays(GL_TRIANGLES, 0, 3);
-  glBindVertexArray(0);
-
-  ImGui::Render();
-  ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-  SDL_GL_SwapWindow(window);
-}
-
-void Device::InitPlatformImGui()
-{
-  ImGui_ImplSDL3_InitForOpenGL(window, glContext);
-  ImGui_ImplOpenGL3_Init();
-}
-void Device::processSDLEvent(SDL_Event& e) {}
-
-SDL_GLContextState* device::GetGlContext()
-{
-  return glContext;
-}
-
-SDL_Window* device::GetWindow()
-{
-  return window;
-}
+  SDL_Window* device::GetWindow() { return window; };

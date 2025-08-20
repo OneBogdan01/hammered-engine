@@ -6,12 +6,14 @@ class EntityComponentSystem;
 }
 namespace hm
 {
+
 class Device;
 
 class Engine
 {
  public:
   static Engine& Instance();
+
   /// <summary>
   /// Initializes core modules
   /// </summary>
@@ -25,11 +27,11 @@ class Engine
   /// </summary>
   void Shutdown();
 
-  Device& GetDevice() const { return *m_device; }
-  ecs::EntityComponentSystem& GetECS() { return *m_ecs; };
+  Device& GetDevice() const { return *m_pDevice; }
+  ecs::EntityComponentSystem& GetECS() { return *m_pEntityComponentSystem; };
 
  private:
-  Device* m_device {nullptr};
-  ecs::EntityComponentSystem* m_ecs {nullptr};
+  Device* m_pDevice {nullptr};
+  ecs::EntityComponentSystem* m_pEntityComponentSystem {nullptr};
 };
 } // namespace hm

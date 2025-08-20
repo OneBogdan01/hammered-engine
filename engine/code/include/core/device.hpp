@@ -1,7 +1,7 @@
 #pragma once
 
 #include <SDL3/SDL_events.h>
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
+
 class Camera;
 namespace hm
 {
@@ -12,43 +12,56 @@ namespace gfx
 
 enum class GRAPHICS_API
 {
+  UNDEFINED,
   OPENGL,
   VULKAN
 };
 
 } // namespace gfx
 
+// In charge of window creation and manipulation
 class Device
 {
  public:
-  ~Device();
-  void Render();
-  void ChangeGraphicsBackend() const;
-  void PreRender();
-  void Initialize();
-  static void DestroyBackend();
-  void SetGraphicsAPI(gfx::GRAPHICS_API api);
-  static void processSDLEvent(SDL_Event& e);
   Device();
+  ~Device();
 
+  // TODO move to editor
+  void ChangeGraphicsBackend() const;
+
+  // TODO remove, move to own camera system
+  // static void processSDLEvent(SDL_Event& e);
+
+  // getters
+  SDL_Window& GetSDLWindow() const { return *m_pWindow; };
+  glm::uvec2 GetWindowSize() const { return m_windowSize; };
+  // setters
+  void SetResizeRequest(bool resizeRequest)
+  {
+    m_bResizeRequested = resizeRequest;
+  }
+  void SetGraphicsAPI(gfx::GRAPHICS_API api);
   void SetViewportSize(const glm::uvec2& windowSize,
                        const glm::ivec2& windowPosition);
 
  private:
-  friend class Engine;
+  void DestroyBackend();
+
+  void Initialize();
+
   glm::uvec2 m_windowSize {1280, 720};
-  // Should be called before any other ImGui set-up calls
-  void InitImGui();
-  // API specific initialization of ImGui
-  void InitPlatformImGui();
-  void resize_swapchain();
+  void ResizeSwapchain();
 
-  bool m_shouldClose {false};
-  bool m_shouldRender {false};
+  bool m_bShouldClose {false};
+  bool m_bMinimized {false};
+  bool m_bResizeRequested {false};
+  bool m_bValidationLayer {false};
+  gfx::GRAPHICS_API m_graphicsApi {gfx::GRAPHICS_API::UNDEFINED};
+  SDL_Window* m_pWindow {nullptr};
 
-  gfx::GRAPHICS_API m_graphicsApi {gfx::GRAPHICS_API::OPENGL};
-  bool resize_requested {false};
+  friend class Engine;
 };
+// TODO move to profiler or something
 struct EngineStats
 {
   float frametime;

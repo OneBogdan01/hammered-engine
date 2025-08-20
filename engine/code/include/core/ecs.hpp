@@ -1,6 +1,5 @@
 ﻿#pragma once
 
-#include <entt.hpp>
 namespace hm
 {
 class Engine;

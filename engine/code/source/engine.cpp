@@ -21,13 +21,13 @@ Engine& Engine::Instance()
 
 void Engine::Init()
 {
-  m_device = new Device();
-  m_ecs = new EntityComponentSystem();
+  m_pDevice = new Device();
+  m_pEntityComponentSystem = new EntityComponentSystem();
 }
 
 void Engine::Run()
 {
-  while (m_device->m_shouldClose == false)
+  while (m_pDevice->m_bShouldClose == false)
   {
     auto start = std::chrono::system_clock::now();
     // move to input class
@@ -38,39 +38,39 @@ void Engine::Run()
       if (event.type == SDL_EVENT_QUIT ||
           (event.type == SDL_EVENT_KEY_DOWN && event.key.key == SDLK_ESCAPE))
       {
-        m_device->m_shouldClose = true;
+        m_pDevice->m_bShouldClose = true;
       }
       if (event.type == SDL_EVENT_WINDOW_MINIMIZED)
       {
-        m_device->m_shouldRender = true;
+        m_pDevice->m_bMinimized = true;
       }
       if (event.type == SDL_EVENT_WINDOW_RESTORED)
       {
-        m_device->m_shouldRender = false;
+        m_pDevice->m_bMinimized = false;
       }
-      m_device->processSDLEvent(event);
+      // m_pDevice->processSDLEvent(event);
       ImGui_ImplSDL3_ProcessEvent(&event); // Forward your event to backend
     }
 
-    // TODO add delta time
-    m_ecs->UpdateSystems(0.1f);
-    m_ecs->RenderSystems();
     // do not draw if we are minimized
-    if (m_device->m_shouldRender)
+    if (m_pDevice->m_bMinimized)
     {
       // throttle the speed to avoid the endless spinning
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
       continue;
     }
     // TODO move to a proper place
-    if (m_device->resize_requested)
+    if (m_pDevice->m_bResizeRequested)
     {
-      m_device->resize_swapchain();
+      m_pDevice->ResizeSwapchain();
     }
 
-    m_device->PreRender();
+    // m_pDevice->PreRender();
 
-    m_device->Render();
+    // m_pDevice->Render();
+    // TODO add delta time
+    m_pEntityComponentSystem->UpdateSystems(0.1f);
+    m_pEntityComponentSystem->RenderSystems();
     auto end = std::chrono::system_clock::now();
     // convert to microseconds (integer), and then come back to miliseconds
     auto elapsed =
@@ -80,7 +80,7 @@ void Engine::Run()
 }
 void Engine::Shutdown()
 {
-  delete m_device;
-  delete m_ecs;
+  delete m_pEntityComponentSystem;
+  delete m_pDevice;
   Info("Engine is closed");
 }
