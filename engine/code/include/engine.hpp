@@ -21,7 +21,9 @@ class Engine
   /// <summary>
   /// Starts the update loop
   /// </summary>
-  void Run();
+  SDL_AppResult Run();
+  // TODO move to input class
+  SDL_AppResult  Input(SDL_Event*event);
   /// <summary>
   /// Cleans up resources and close window
   /// </summary>

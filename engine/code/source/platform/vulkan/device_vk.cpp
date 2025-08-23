@@ -118,6 +118,7 @@ Device::~Device()
 {
   DestroyBackend();
 }
+void Device::EndFrame() {}
 
 AllocatedImage hm::create_image(VkExtent3D size, VkFormat format,
                                 VkImageUsageFlags usage, bool mipmapped)

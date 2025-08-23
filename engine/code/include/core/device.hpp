@@ -26,6 +26,7 @@ class Device
   Device();
   ~Device();
 
+  void EndFrame();
   // TODO move to editor
   void ChangeGraphicsBackend() const;
 
