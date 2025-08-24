@@ -41,6 +41,8 @@ class Device
   {
     m_bResizeRequested = resizeRequest;
   }
+  void SetCloseRequest(bool closeRequest) { m_bShouldClose = closeRequest; }
+  void SetMinimize(bool minimize) { m_bMinimized = minimize; }
   void SetGraphicsAPI(gfx::GRAPHICS_API api);
   void SetViewportSize(const glm::uvec2& windowSize,
                        const glm::ivec2& windowPosition);

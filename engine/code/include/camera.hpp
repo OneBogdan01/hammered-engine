@@ -1,12 +1,18 @@
 ﻿#pragma once
 
+#include "core/ecs.hpp"
+#include "core/input.hpp"
+
 #include <SDL3/SDL_events.h>
 #include <glm/fwd.hpp>
 #include <glm/vec3.hpp>
 
-class Camera
+class Camera final : public hm::input::InputHandler, public hm::ecs::System
 {
  public:
+  explicit Camera(const std::string& name);
+  ;
+
   glm::vec3 velocity;
   glm::vec3 position;
   // vertical rotation
@@ -17,7 +23,8 @@ class Camera
   glm::mat4 getViewMatrix() const;
   glm::mat4 getRotationMatrix() const;
 
-  void processSDLEvent(SDL_Event& e);
-
-  void update();
+  void Update(f32) override;
+  void Render() override;
+  ~Camera() override;
+  void HandleInput(SDL_Event* event) override;
 };

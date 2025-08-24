@@ -1,11 +1,16 @@
 #pragma once
 
-namespace hm::ecs
-{
-class EntityComponentSystem;
-}
 namespace hm
 {
+namespace ecs
+{
+class EntityComponentSystem;
+
+}
+namespace input
+{
+class Input;
+}
 
 class Device;
 
@@ -22,8 +27,7 @@ class Engine
   /// Starts the update loop
   /// </summary>
   SDL_AppResult Run();
-  // TODO move to input class
-  SDL_AppResult  Input(SDL_Event*event);
+
   /// <summary>
   /// Cleans up resources and close window
   /// </summary>
@@ -31,9 +35,11 @@ class Engine
 
   Device& GetDevice() const { return *m_pDevice; }
   ecs::EntityComponentSystem& GetECS() { return *m_pEntityComponentSystem; };
+  input::Input& GetInput() { return *m_pInput; };
 
  private:
   Device* m_pDevice {nullptr};
   ecs::EntityComponentSystem* m_pEntityComponentSystem {nullptr};
+  input::Input* m_pInput {nullptr};
 };
 } // namespace hm

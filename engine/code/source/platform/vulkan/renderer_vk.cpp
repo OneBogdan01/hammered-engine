@@ -103,7 +103,6 @@ MaterialInstance defaultData;
 DrawContext mainDrawContext;
 std::unordered_map<std::string, std::shared_ptr<Node>> loadedNodes;
 
-Camera mainCamera;
 void update_scene(Camera& mainCamera);
 
 std::unordered_map<std::string, std::shared_ptr<LoadedGLTF>> loadedScenes;
@@ -115,6 +114,8 @@ hm::gpx::Renderer::Renderer(const std::string& name) : System(name)
   init_descriptors();
   init_pipelines();
   init_default_data();
+  auto& mainCamera = Engine::Instance().GetECS().GetSystem<Camera>();
+
   mainCamera.velocity = glm::vec3(0.f);
   mainCamera.position = glm::vec3(0, 0, 5);
 
@@ -626,6 +627,8 @@ void hm::gpx::Renderer::Render()
 
   // wait until the gpu has finished rendering the last frame. Timeout of 1
   // second
+  auto& mainCamera = Engine::Instance().GetECS().GetSystem<Camera>();
+
   update_scene(mainCamera);
   VK_CHECK(vkWaitForFences(_device, 1, &get_current_frame()._renderFence, true,
                            1000000000));
@@ -1099,8 +1102,6 @@ void internal::update_scene(Camera& mainCamera)
   loadedScenes["structure"]->Draw(glm::mat4 {1.f}, mainDrawContext);
 
   loadedNodes["Suzanne"]->Draw(glm::mat4 {1.f}, mainDrawContext);
-
-  mainCamera.update();
 
   glm::mat4 view = mainCamera.getViewMatrix();
 

@@ -2,18 +2,15 @@
 
 #include "core/ecs.hpp"
 #include "core/fileio.hpp"
-
-#include <SDL3/SDL_events.h>
-
+#include "core/input.hpp"
+#include "camera.hpp"
 #include "utility/console.hpp"
-
-#include <backends/imgui_impl_sdl3.h>
 
 using namespace hm;
 using namespace hm::log;
 using namespace hm::ecs;
 
-Engine &Engine::Instance()
+Engine& Engine::Instance()
 {
   static Engine engineInstance;
   return engineInstance;
@@ -22,7 +19,14 @@ Engine &Engine::Instance()
 void Engine::Init()
 {
   m_pDevice = new Device();
+  m_pInput = new input::Input();
+
   m_pEntityComponentSystem = new EntityComponentSystem();
+
+  // TODO create camera based if it is the editor or not
+  auto& camera =
+      m_pEntityComponentSystem->CreateSystem<Camera>("Camera Editor");
+  m_pInput->AddInputHandler(camera);
 }
 
 SDL_AppResult Engine::Run()
@@ -59,30 +63,13 @@ SDL_AppResult Engine::Run()
   stats.frametime = elapsed.count() / 1000.f;
   return SDL_APP_CONTINUE;
 }
-SDL_AppResult Engine::Input(SDL_Event *event)
-{
-  if (event->type == SDL_EVENT_QUIT ||
-      (event->type == SDL_EVENT_KEY_DOWN && event->key.key == SDLK_ESCAPE))
-  {
-    m_pDevice->m_bShouldClose = true;
-  }
-  if (event->type == SDL_EVENT_WINDOW_MINIMIZED)
-  {
-    m_pDevice->m_bMinimized = true;
-  }
-  if (event->type == SDL_EVENT_WINDOW_RESTORED)
-  {
-    m_pDevice->m_bMinimized = false;
-  }
-  // m_pDevice->processSDLEvent(event);
-  ImGui_ImplSDL3_ProcessEvent(event); // Forward your event to backend
-
-  return SDL_APP_CONTINUE;
-}
 
 void Engine::Shutdown()
 {
+  Info("Engine is freeing resources");
   delete m_pEntityComponentSystem;
+  delete m_pInput;
+
   delete m_pDevice;
   Info("Engine is closed");
 }

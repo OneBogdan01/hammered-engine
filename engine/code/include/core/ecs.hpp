@@ -33,6 +33,8 @@ class EntityComponentSystem
 
   template<typename T, typename... Args>
   T& CreateSystem(Args&&... args);
+  template<typename T>
+  T& GetSystem();
   void UpdateSystems(f32);
   void RenderSystems();
 
@@ -49,6 +51,18 @@ T& EntityComponentSystem::CreateSystem(Args&&... args)
   m_systems.emplace_back(std::unique_ptr<System>(system));
   // sort based on priority?
   return *system;
+}
+template<typename T>
+T& EntityComponentSystem::GetSystem()
+{
+  auto it = std::find_if(m_systems.begin(), m_systems.end(),
+                         [](const auto& system)
+                         {
+                           return dynamic_cast<T*>(system.get()) != nullptr;
+                         });
+
+  SDL_assert(it != m_systems.end());
+  return *dynamic_cast<T*>(it->get());
 }
 
 } // namespace hm::ecs
