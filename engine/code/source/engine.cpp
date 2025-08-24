@@ -1,20 +1,14 @@
 #include "engine.hpp"
 
+#include "core/ecs.hpp"
 #include "core/fileio.hpp"
-
-#include <SDL3/SDL_events.h>
-
-#include <cassert>
-
+#include "core/input.hpp"
+#include "camera.hpp"
 #include "utility/console.hpp"
-
-#include <fstream>
-#include <thread>
-#include <backends/imgui_impl_sdl3.h>
-#include <SDL3/SDL_filesystem.h>
 
 using namespace hm;
 using namespace hm::log;
+using namespace hm::ecs;
 
 Engine& Engine::Instance()
 {
@@ -24,59 +18,58 @@ Engine& Engine::Instance()
 
 void Engine::Init()
 {
-  m_device = new Device();
+  m_pDevice = new Device();
+  m_pInput = new input::Input();
+
+  m_pEntityComponentSystem = new EntityComponentSystem();
+
+  // TODO create camera based if it is the editor or not
+  auto& camera =
+      m_pEntityComponentSystem->CreateSystem<Camera>("Camera Editor");
+  m_pInput->AddInputHandler(camera);
 }
 
-void Engine::Run()
+SDL_AppResult Engine::Run()
 {
-  while (m_device->m_shouldClose == false)
+  if (m_pDevice->m_bShouldClose == true)
+    return SDL_APP_SUCCESS;
+
+  auto start = std::chrono::system_clock::now();
+
+  // do not draw if we are minimized
+  if (m_pDevice->m_bMinimized)
   {
-    auto start = std::chrono::system_clock::now();
-    SDL_Event event;
-
-    while (SDL_PollEvent(&event))
-    {
-      if (event.type == SDL_EVENT_QUIT ||
-          (event.type == SDL_EVENT_KEY_DOWN && event.key.key == SDLK_ESCAPE))
-      {
-        m_device->m_shouldClose = true;
-      }
-      if (event.type == SDL_EVENT_WINDOW_MINIMIZED)
-      {
-        m_device->m_shouldRender = true;
-      }
-      if (event.type == SDL_EVENT_WINDOW_RESTORED)
-      {
-        m_device->m_shouldRender = false;
-      }
-      m_device->processSDLEvent(event);
-      ImGui_ImplSDL3_ProcessEvent(&event); // Forward your event to backend
-    }
-    // do not draw if we are minimized
-    if (m_device->m_shouldRender)
-    {
-      // throttle the speed to avoid the endless spinning
-      std::this_thread::sleep_for(std::chrono::milliseconds(100));
-      continue;
-    }
-    // TODO move to a proper place
-    if (m_device->resize_requested)
-    {
-      m_device->resize_swapchain();
-    }
-
-    m_device->PreRender();
-
-    m_device->Render();
-    auto end = std::chrono::system_clock::now();
-    // convert to microseconds (integer), and then come back to miliseconds
-    auto elapsed =
-        std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-    stats.frametime = elapsed.count() / 1000.f;
+    // throttle the speed to avoid the endless spinning
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    return SDL_APP_CONTINUE;
   }
+  // TODO move to a proper place
+  if (m_pDevice->m_bResizeRequested)
+  {
+    m_pDevice->ResizeSwapchain();
+  }
+
+  // m_pDevice->PreRender();
+
+  // m_pDevice->Render();
+  // TODO add delta time
+  m_pEntityComponentSystem->UpdateSystems(0.1f);
+  m_pEntityComponentSystem->RenderSystems();
+  m_pDevice->EndFrame();
+  auto end = std::chrono::system_clock::now();
+  // convert to microseconds (integer), and then come back to miliseconds
+  auto elapsed =
+      std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+  stats.frametime = elapsed.count() / 1000.f;
+  return SDL_APP_CONTINUE;
 }
+
 void Engine::Shutdown()
 {
-  delete m_device;
+  Info("Engine is freeing resources");
+  delete m_pEntityComponentSystem;
+  delete m_pInput;
+
+  delete m_pDevice;
   Info("Engine is closed");
 }

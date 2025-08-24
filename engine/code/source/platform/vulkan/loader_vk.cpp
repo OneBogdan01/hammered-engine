@@ -5,13 +5,13 @@
 #include "SDL3/SDL_assert.h"
 
 #include "utility/console.hpp"
-#include <tiny_gltf.h>
 #include <stb_image.h>
 #include <volk.h>
 #include "platform/vulkan/device_vk.hpp"
 
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/quaternion.hpp>
+
 using namespace tinygltf;
 using namespace hm;
 inline void ReadComponent(const unsigned char* ptr, int type, int c, bool norm,

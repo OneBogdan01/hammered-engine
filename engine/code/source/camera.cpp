@@ -1,61 +1,79 @@
 ﻿#include "camera.hpp"
+
+#include "engine.hpp"
+#include "core/device.hpp"
+#include "utility/console.hpp"
+
 #include <glm/gtx/transform.hpp>
 #include <glm/gtx/quaternion.hpp>
 
-void Camera::update()
+void Camera::Update(f32)
 {
   glm::mat4 cameraRotation = getRotationMatrix();
   position += glm::vec3(cameraRotation * glm::vec4(velocity * 0.5f, 0.f));
 }
-
-void Camera::processSDLEvent(SDL_Event& e)
+void Camera::Render() {}
+Camera::~Camera() {}
+void Camera::HandleInput(SDL_Event* event)
 {
-  if (e.type == SDL_EVENT_KEY_DOWN)
+  SDL_Window* window = &hm::Engine::Instance().GetDevice().GetSDLWindow();
+
+  if (event->type == SDL_EVENT_KEY_DOWN)
   {
-    if (e.key.scancode == SDL_SCANCODE_W)
+    if (event->key.scancode == SDL_SCANCODE_W)
     {
       velocity.z = -1;
     }
-    if (e.key.scancode == SDL_SCANCODE_S)
+    if (event->key.scancode == SDL_SCANCODE_S)
     {
       velocity.z = 1;
     }
-    if (e.key.scancode == SDL_SCANCODE_A)
+    if (event->key.scancode == SDL_SCANCODE_A)
     {
       velocity.x = -1;
     }
-    if (e.key.scancode == SDL_SCANCODE_D)
+    if (event->key.scancode == SDL_SCANCODE_D)
     {
       velocity.x = 1;
     }
-  }
 
-  if (e.type == SDL_EVENT_KEY_UP)
-  {
-    if (e.key.scancode == SDL_SCANCODE_W)
+    // changes mode
+    if (event->key.scancode == SDL_SCANCODE_SPACE && event->key.repeat == false)
     {
-      velocity.z = 0;
-    }
-    if (e.key.scancode == SDL_SCANCODE_S)
-    {
-      velocity.z = 0;
-    }
-    if (e.key.scancode == SDL_SCANCODE_A)
-    {
-      velocity.x = 0;
-    }
-    if (e.key.scancode == SDL_SCANCODE_D)
-    {
-      velocity.x = 0;
+      SDL_SetWindowRelativeMouseMode(window,
+                                     !SDL_GetWindowRelativeMouseMode(window));
     }
   }
 
-  if (e.type == SDL_EVENT_MOUSE_MOTION)
+  if (event->type == SDL_EVENT_KEY_UP)
   {
-    yaw += e.motion.xrel / 200.f;
-    pitch -= e.motion.yrel / 200.f;
+    if (event->key.scancode == SDL_SCANCODE_W)
+    {
+      velocity.z = 0;
+    }
+    if (event->key.scancode == SDL_SCANCODE_S)
+    {
+      velocity.z = 0;
+    }
+    if (event->key.scancode == SDL_SCANCODE_A)
+    {
+      velocity.x = 0;
+    }
+    if (event->key.scancode == SDL_SCANCODE_D)
+    {
+      velocity.x = 0;
+    }
+  }
+
+  if (event->type == SDL_EVENT_MOUSE_MOTION &&
+      SDL_GetWindowRelativeMouseMode(window) == true)
+  {
+    yaw += event->motion.xrel / 200.f;
+    pitch -= event->motion.yrel / 200.f;
   }
 }
+
+Camera::Camera(const std::string& name) : System(name) {}
 glm::mat4 Camera::getViewMatrix() const
 {
   // to create a correct model view, we need to move the world in opposite

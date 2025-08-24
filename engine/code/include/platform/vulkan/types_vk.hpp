@@ -1,23 +1,14 @@
 ﻿#pragma once
 
-#include <fmt/format.h>
 #include <vk_mem_alloc.h>
 
-#include <array>
-#include <deque>
-#include <functional>
 #include <glm/mat4x4.hpp>
 #include <glm/vec4.hpp>
 #include <memory>
-#include <optional>
-#include <span>
 #include <string>
 #include <vector>
-#include <cstdio>
-#include <map>
 #include <sstream>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 namespace hm

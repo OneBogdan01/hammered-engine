@@ -1,5 +1,4 @@
 ﻿#pragma once
-#include "core/device.hpp"
 
 #include "platform/vulkan/descriptors_vk.hpp"
 
@@ -67,6 +66,10 @@ struct GPUSceneData
   glm::vec4 sunlightColor;
 };
 
+void init_vulkan(SDL_Window* window, bool debug);
+FrameData& get_current_frame();
+void immediate_submit(std::function<void(VkCommandBuffer cmd)>&& function);
+
 } // namespace internal
 GPUMeshBuffers UploadMesh(std::span<uint32_t> indicies,
                           std::span<Vertex> vertices);
@@ -117,7 +120,24 @@ struct GLTFMetallic_Roughness
       DescriptorAllocatorGrowable& descriptorAllocator);
 };
 
+// TODO super cursed globals
 inline GLTFMetallic_Roughness metalRoughMaterial;
+inline internal::DeletionQueue _mainDeletionQueue;
+inline VkFormat _swapchainImageFormat;
+inline VkQueue _graphicsQueue;
+inline uint32_t _graphicsQueueFamily;
+inline VkInstance _instance;                      // Vulkan library handle
+inline VkDebugUtilsMessengerEXT _debug_messenger; // Vulkan debug output handle
+inline VkPhysicalDevice _chosenGPU; // GPU chosen as the default device
+inline VkDevice _device;            // Vulkan device for commands
+inline VkSurfaceKHR _surface;       // Vulkan window surface
+inline VkExtent2D _swapchainExtent;
+inline AllocatedImage _depthImage;
+// swapchain
+inline VkSwapchainKHR _swapchain;
+
+inline std::vector<VkImage> _swapchainImages;
+inline std::vector<VkImageView> _swapchainImageViews;
 // textures
 AllocatedImage create_image(VkExtent3D size, VkFormat format,
                             VkImageUsageFlags usage, bool mipmapped = false);
@@ -125,5 +145,12 @@ AllocatedImage create_image(void* data, VkExtent3D size, VkFormat format,
                             VkImageUsageFlags usage, bool mipmapped = false);
 void destroy_buffer(const AllocatedBuffer& buffer);
 void destroy_image(const AllocatedImage& img);
+inline u32 swapchainImageIndex;
+inline internal::FrameData _frames[internal::FRAME_OVERLAP];
+inline int _frameNumber {0};
+inline VmaAllocator _allocator;
+
+inline AllocatedImage _drawImage;
+inline VkExtent2D _drawExtent;
 
 } // namespace hm

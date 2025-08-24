@@ -9,19 +9,7 @@
 #include <imgui.h>
 
 using namespace hm;
-void Device::InitImGui()
-{
-  // Setup Dear ImGui context
-  IMGUI_CHECKVERSION();
-  ImGui::CreateContext();
-  ImGuiIO& io = ImGui::GetIO();
-  io.ConfigFlags |=
-      ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
-  io.ConfigFlags |=
-      ImGuiConfigFlags_NavEnableGamepad;            // Enable Gamepad Controls
-  io.ConfigFlags |= ImGuiConfigFlags_DockingEnable; // IF using Docking Branch
-  InitPlatformImGui();
-}
+
 void Device::SetGraphicsAPI(gfx::GRAPHICS_API api)
 {
   m_graphicsApi = api;
@@ -38,7 +26,10 @@ Device::Device()
     log::Error("SDL could not be initialized");
     return;
   }
-
+  // set the validation layers to false if not in debug
+#ifdef _DEBUG
+  m_bValidationLayer = true;
+#endif
   Initialize();
   // TODO check if init failed
   log::Info("Hammered Engine was initialized");
