@@ -16,6 +16,9 @@ foreach(backend ${GAME_BACKENDS})
             imgui_core
             tinygltf
             EnTT
+            glslang::glslang
+            glslang::SPIRV
+            glslang::glslang-default-resource-limits
     )
 
     # Backend-specific libraries

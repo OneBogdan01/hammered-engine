@@ -658,6 +658,7 @@ std::optional<std::shared_ptr<hm::LoadedGLTF>> hm::loadGltf(
 
     newmesh->meshBuffers = UploadMesh(indices, vertices);
   }
+
   for (tinygltf::Node& node : model.nodes)
   {
     std::shared_ptr<hm::Node> newNode;

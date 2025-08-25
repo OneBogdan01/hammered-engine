@@ -2,9 +2,23 @@
 #include "platform/vulkan/types_vk.hpp"
 #include "platform/vulkan/pipelines_vk.hpp"
 #include "platform/vulkan/initializers_vk.hpp"
+#include <glslang_c_shader_types.h>
 
-#include <fstream>
+namespace hm::vk
+{
 
+struct ShaderModule
+{
+  std::vector<u32> SPIRV {};
+  VkShaderModule shaderModule {};
+};
+size_t CompileShader(glslang_stage_t stage, const char* shaderSource,
+                     ShaderModule& shaderModule);
+std::string ReadShaderFile(const char* fileName);
+size_t CompileShaderFile(const char* file, hm::vk::ShaderModule& shaderModule);
+void CompilerShaderModule(const char* sourceFilename, const char* destFilename);
+void SaveSPIRVBinaryFile(const char* filename, unsigned int* code, size_t size);
+} // namespace hm::vk
 namespace vkutil
 {
 bool load_shader_module(const char* filePath, VkDevice device,
@@ -37,6 +51,8 @@ class PipelineBuilder
   void set_color_attachment_format(VkFormat format);
   void set_depth_format(VkFormat format);
   void disable_depthtest();
-  void enable_depthtest(bool depthWriteEnable, VkCompareOp op);void enable_blending_additive();void enable_blending_alphablend();
+  void enable_depthtest(bool depthWriteEnable, VkCompareOp op);
+  void enable_blending_additive();
+  void enable_blending_alphablend();
 };
 }; // namespace vkutil

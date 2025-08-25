@@ -55,6 +55,39 @@ void destroy_swapchain();
 } // namespace hm::internal
 using namespace hm;
 using namespace hm::internal;
+// Default debug messenger
+// Feel free to copy-paste it into your own code, change it as needed, then call
+// `set_debug_callback()` to use that instead
+VkBool32 VulkanCallback(
+    VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+    VkDebugUtilsMessageTypeFlagsEXT messageType,
+    const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void*)
+{
+  const auto* const mt = vkb::to_string_message_type(messageType);
+
+  switch (messageSeverity)
+  {
+    case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
+      log::Error("{} {}", mt, pCallbackData->pMessage);
+      break;
+    case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
+      log::Warning("{}  {}", mt, pCallbackData->pMessage);
+      break;
+
+    case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
+    case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
+      log::Info("{}  {}", mt, pCallbackData->pMessage);
+      break;
+
+    default:
+      log::Info("Unknown Severity");
+
+      log::Info("{}  {}", mt, pCallbackData->pMessage);
+      break;
+  }
+
+  return VK_FALSE; // Applications must return false here
+}
 
 void Device::Initialize()
 {
@@ -65,7 +98,7 @@ void Device::Initialize()
   m_pWindow = SDL_CreateWindow(WindowTitle, static_cast<i32>(m_windowSize.x),
                                static_cast<i32>(m_windowSize.y), windowFlags);
 
-  init_vulkan(m_pWindow, m_bValidationLayer);
+  InitVulkan(m_pWindow, m_bValidationLayer);
   init_swapchain(m_windowSize);
   init_commands();
   init_sync_structures();
@@ -262,14 +295,14 @@ MaterialInstance GLTFMetallic_Roughness::write_material(
   return matData;
 }
 
-void internal::init_vulkan(SDL_Window* window, bool debug)
+void internal::InitVulkan(SDL_Window* window, bool debug)
 {
   vkb::InstanceBuilder builder;
 
   // make the vulkan instance, with basic debug features
   auto inst_ret = builder.set_app_name("Example Vulkan Application")
                       .request_validation_layers(debug)
-                      .use_default_debug_messenger()
+                      .set_debug_callback(VulkanCallback)
                       .require_api_version(1, 3, 0)
                       .build();
 

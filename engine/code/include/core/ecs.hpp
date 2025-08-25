@@ -8,6 +8,9 @@ namespace hm::ecs
 {
 using Entity = entt::entity;
 using Registry = entt::registry;
+struct DeleteFlag
+{
+};
 struct System
 
 {
@@ -24,21 +27,38 @@ struct System
 class EntityComponentSystem
 {
  public:
-  Registry registry {};
-
   EntityComponentSystem(const EntityComponentSystem&) = delete;
   EntityComponentSystem(const EntityComponentSystem&&) = delete;
   EntityComponentSystem& operator=(const EntityComponentSystem&) = delete;
   EntityComponentSystem& operator=(const EntityComponentSystem&&) = delete;
-
+  // System
+  // Updates all registered systems with delta time
+  void UpdateSystems(f32);
+  void RenderSystems();
   template<typename T, typename... Args>
   T& CreateSystem(Args&&... args);
   template<typename T>
   T& GetSystem();
-  void UpdateSystems(f32);
-  void RenderSystems();
 
+  // Components
+  template<typename T>
+  T& AddComponent(Entity entity);
+  template<typename T>
+  T& GetComponent(Entity entity);
+  template<typename T>
+  bool HasComponent(Entity entity);
+  //  Creates and returns the entity id
+  Entity CreateEntity();
+  // Adds a DeleteFlag component to the specified entity
+  void QueueEntityDeletion(Entity entity);
+  void DeleteEntity(Entity entity);
+  // This will get all entities that have a  DeleteFlag component and
+  // delete them
+  void DeleteEntities();
+
+  // Components
  private:
+  Registry m_registry {};
   EntityComponentSystem() = default;
   ~EntityComponentSystem() = default;
   std::vector<std::unique_ptr<System>> m_systems {};
@@ -63,6 +83,22 @@ T& EntityComponentSystem::GetSystem()
 
   SDL_assert(it != m_systems.end());
   return *dynamic_cast<T*>(it->get());
+}
+
+template<typename T>
+T& EntityComponentSystem::AddComponent(Entity entity)
+{
+  return m_registry.emplace<T>(entity);
+}
+template<typename T>
+T& EntityComponentSystem::GetComponent(Entity entity)
+{
+  return m_registry.get<T>(entity);
+}
+template<typename T>
+bool EntityComponentSystem::HasComponent(Entity entity)
+{
+  return m_registry.try_get<T>(entity);
 }
 
 } // namespace hm::ecs

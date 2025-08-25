@@ -9,6 +9,25 @@ find_package(Vulkan)
 find_package(OpenGL)
 
 # vulkan
+## glslang
+## Disbale optimization for now
+set(ENABLE_OPT OFF CACHE BOOL "" FORCE)
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)  # Force static linking
+set(ENABLE_GLSLANG_BINARIES OFF CACHE BOOL "" FORCE)  # Don't build executables
+
+add_subdirectory(glslang)
+target_include_directories(glslang PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/glslang/glslang/Include)
+target_include_directories(glslang PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/glslang)
+# Set folder organization for IDE
+set_target_properties(glslang PROPERTIES FOLDER "engine/external")
+set_target_properties(SPIRV PROPERTIES FOLDER "engine/external")
+set_target_properties(glslang-default-resource-limits PROPERTIES FOLDER "engine/external")
+set_target_properties(SPVRemapper PROPERTIES FOLDER "engine/external")
+set_target_properties(OSDependent PROPERTIES FOLDER "engine/external")
+set_target_properties(MachineIndependent PROPERTIES FOLDER "engine/external")
+set_target_properties(GenericCodeGen PROPERTIES FOLDER "engine/external")
+
+
 add_library(vulkan INTERFACE)
 set(VULKAN_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Vulkan-Headers/include)
 target_sources(vulkan INTERFACE ${VULKAN_INCLUDE_DIR}/vulkan/vulkan.h)
@@ -270,6 +289,16 @@ if(MSVC)
     target_compile_options(glm INTERFACE /W0)
     target_compile_options(stb_image INTERFACE /W0)
     target_compile_options(imgui_core PRIVATE /W0)
+    target_compile_options(glslang PRIVATE /W0)
+    target_compile_options(SPIRV PRIVATE /W0)
+    target_compile_options(glslang-default-resource-limits PRIVATE /W0)
+    target_compile_options(SPVRemapper PRIVATE /W0)
+    target_compile_options(OSDependent PRIVATE /W0)
+    target_compile_options(MachineIndependent PRIVATE /W0)
+    target_compile_options(GenericCodeGen PRIVATE /W0)
+
+    target_compile_options(OSDependent PRIVATE /W0)
+
 if (ENABLE_VK_BACKEND)
     target_compile_options(vkbootstrap PRIVATE /W0)
     target_compile_options(imgui_vulkan PRIVATE /W0)

@@ -4,6 +4,8 @@
 
 #include "platform/vulkan/device_vk.hpp"
 #define VMA_IMPLEMENTATION
+#include "Common.h"
+
 #include <vk_mem_alloc.h>
 
 #include "camera.hpp"
@@ -11,6 +13,7 @@
 #include "core/device.hpp"
 #include "core/fileio.hpp"
 #include "external/imgui_impl.hpp"
+#include "glslang/Public/ShaderLang.h"
 #include "platform/vulkan/images_vk.hpp"
 #include "platform/vulkan/initializers_vk.hpp"
 #include "platform/vulkan/loader_vk.hpp"
@@ -164,6 +167,11 @@ void internal::init_background_pipelines()
   VK_CHECK(vkCreatePipelineLayout(_device, &computeLayout, nullptr,
                                   &_gradientPipelineLayout));
 
+  glslang::InitializeProcess();
+
+  hm::vk::CompilerShaderModule(
+      io::GetPath("shaders/gradient_color.comp").c_str(),
+      io::GetPath("shaders/gradient_color.comp.vk.spv").c_str());
   VkShaderModule gradientShader;
   if (!vkutil::load_shader_module(
           io::GetPath("shaders/gradient_color.comp.vk.spv").c_str(), _device,
@@ -178,7 +186,7 @@ void internal::init_background_pipelines()
   {
     log::Error("Error when building the compute shader \n");
   }
-
+  glslang::FinalizeProcess();
   VkPipelineShaderStageCreateInfo stageinfo {};
   stageinfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
   stageinfo.pNext = nullptr;
