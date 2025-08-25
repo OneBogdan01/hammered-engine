@@ -50,26 +50,112 @@ function(add_external name url tag)
     endif()
     set_target_properties(${name} PROPERTIES FOLDER "engine/external")
 endfunction()
-# Asset function
+# Asset and Shader Management Functions
 set(ASSET_SOURCE_DIR "${CMAKE_SOURCE_DIR}/game/assets")
+
+# Shader compilation function - creates compiled shaders target
+function(setup_shader_compilation)
+    find_program(GLSL_VALIDATOR glslangValidator HINTS /usr/bin /usr/local/bin $ENV{VULKAN_SDK}/Bin/ $ENV{VULKAN_SDK}/Bin32/)
+
+    if(NOT GLSL_VALIDATOR)
+        message(WARNING "glslangValidator was not found! Shader compilation will be skipped.")
+        return()
+    endif()
+
+    message(STATUS "Found glslangValidator: ${GLSL_VALIDATOR}")
+
+    # Find all shader files
+    file(GLOB_RECURSE GLSL_SOURCE_FILES
+        "${ASSET_SOURCE_DIR}/shaders/*.frag"
+        "${ASSET_SOURCE_DIR}/shaders/*.vert"
+        "${ASSET_SOURCE_DIR}/shaders/*.comp"
+        "${ASSET_SOURCE_DIR}/shaders/*.tesc"
+        "${ASSET_SOURCE_DIR}/shaders/*.tese"
+        "${ASSET_SOURCE_DIR}/shaders/*.geom"
+    )
+
+    set(SPIRV_BINARY_FILES)
+    set(SHADER_OUTPUT_DIR "${CMAKE_BINARY_DIR}/compiled_shaders")
+
+    # Create output directory
+    file(MAKE_DIRECTORY "${SHADER_OUTPUT_DIR}")
+
+    # Compile shaders for each enabled backend
+    foreach(GLSL ${GLSL_SOURCE_FILES})
+        get_filename_component(FILE_NAME ${GLSL} NAME)
+
+        if(ENABLE_VK_BACKEND)
+            # Vulkan SPIR-V
+            set(SPIRV_VK "${SHADER_OUTPUT_DIR}/${FILE_NAME}.vk.spv")
+            add_custom_command(
+                OUTPUT ${SPIRV_VK}
+                COMMAND ${GLSL_VALIDATOR} -V ${GLSL} -o ${SPIRV_VK}
+                DEPENDS ${GLSL}
+                COMMENT "Compiling Vulkan SPIR-V: ${FILE_NAME}"
+            )
+            list(APPEND SPIRV_BINARY_FILES ${SPIRV_VK})
+        endif()
+
+        if(ENABLE_GL_BACKEND)
+            # OpenGL SPIR-V
+            set(SPIRV_GL "${SHADER_OUTPUT_DIR}/${FILE_NAME}.gl.spv")
+            add_custom_command(
+                OUTPUT ${SPIRV_GL}
+                COMMAND ${GLSL_VALIDATOR} -G ${GLSL} -o ${SPIRV_GL}
+                DEPENDS ${GLSL}
+                COMMENT "Compiling OpenGL SPIR-V: ${FILE_NAME}"
+            )
+            list(APPEND SPIRV_BINARY_FILES ${SPIRV_GL})
+        endif()
+    endforeach()
+
+    # Create shader compilation target
+    add_custom_target(
+        compile_shaders
+        DEPENDS ${SPIRV_BINARY_FILES}
+        COMMENT "Compiling all shaders"
+    )
+    set_target_properties(compile_shaders PROPERTIES FOLDER "utilities")
+endfunction()
+
+# Asset copying function - copies assets and compiled shaders to target directory
 function(configure_assets_for target)
-
-
     set(ASSET_BINARY_DIR "$<TARGET_FILE_DIR:${target}>/assets")
     set(ASSET_SOLUTION_DIR "${CMAKE_CURRENT_BINARY_DIR}/assets")
 
+    # Copy source assets (textures, models, etc.)
     add_custom_command(TARGET ${target} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
         "${ASSET_SOURCE_DIR}"
         "${ASSET_BINARY_DIR}"
+        COMMENT "Copying assets to ${target} runtime directory"
     )
+    
     add_custom_command(TARGET ${target} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
         "${ASSET_SOURCE_DIR}"
         "${ASSET_SOLUTION_DIR}"
+        COMMENT "Copying assets to ${target} build directory"
     )
-endfunction()
 
+    # Copy compiled shaders if they exist
+    set(SHADER_OUTPUT_DIR "${CMAKE_BINARY_DIR}/compiled_shaders")
+    if(EXISTS "${SHADER_OUTPUT_DIR}")
+        add_custom_command(TARGET ${target} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${SHADER_OUTPUT_DIR}"
+            "${ASSET_BINARY_DIR}/shaders"
+            COMMENT "Copying compiled shaders to ${target} runtime directory"
+        )
+        
+        add_custom_command(TARGET ${target} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${SHADER_OUTPUT_DIR}"
+            "${ASSET_SOLUTION_DIR}/shaders"
+            COMMENT "Copying compiled shaders to ${target} build directory"
+        )
+    endif()
+endfunction()
 # Generic addition of macro per backend
 function(exec_macro_for target backend)
     foreach(backend IN LISTS backends)
@@ -82,6 +168,8 @@ function(exec_macro_for target backend)
 endfunction()
 
 function(add_game_backends backends)
+ setup_shader_compilation()
+
     set(game_exes)
 
     foreach(backend IN LISTS backends)
@@ -92,7 +180,10 @@ function(add_game_backends backends)
         #TODO expand this for scripting, or structuring the game application
         add_executable(${target} game/src/main.cpp)
         target_link_libraries(${target} PRIVATE ${engine})
-        add_dependencies(${engine} shaders)
+        # Ensure shaders are compiled before building the target
+        if(TARGET compile_shaders)
+            add_dependencies(${target} compile_shaders)
+        endif()
 
         exec_macro_for(${target} "${backends}")
         exec_macro_for(${engine} "${backend}")
