@@ -1,16 +1,29 @@
 # Configuring some global settings
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+# Copy it to the source directory for VS Code
+if(CMAKE_EXPORT_COMPILE_COMMANDS)
+    add_custom_target(copy_compile_commands ALL
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        ${CMAKE_BINARY_DIR}/compile_commands.json
+        ${CMAKE_SOURCE_DIR}/compile_commands.json
+        DEPENDS ${CMAKE_BINARY_DIR}/compile_commands.json
+    )
+endif()
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set(VKB_WSI_SELECTION "XCB" CACHE STRING "Select WSI target (XCB, XLIB, WAYLAND, D2D)")
 
 if(MSVC)
     add_compile_options(/MP)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 /WX /EHsc /DNOMINMAX") 
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /Zi /MTd /Od /Ob0 /DDEBUG")
-    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} /O2 /Zi /DDEVELOP /MT")
-    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /O2 /DNDEBUG /MT")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 /WX /EHsc /DNOMINMAX")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /Zi /MDd /Od /Ob0 /DDEBUG")
+    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} /O2 /Zi /DDEVELOP /MD")
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /O2 /DNDEBUG /MD")
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -DNOMINMAX")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -O0 -DDEBUG")
+    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -O2 -g -DDEVELOP")
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2 -DNDEBUG")
 endif()
-
 
 
 
@@ -19,37 +32,6 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib/$<CONFIG>)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin/$<CONFIG>)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin/$<CONFIG>)
 
-# Externals TODO not all externals are added like so
-# From https://github.com/CloakedRex6063/Neo/blob/master/scripts/cmake/utility.cmake
-function(add_external name url tag)
-    set(src_dir "")   # Default empty
-    set(bin_dir "")   # Default empty
-
-    # If more than 3 args, treat 4th as src_dir
-    if(ARGC GREATER 3)
-        set(src_dir "${ARGV3}")
-    endif()
-
-    # If more than 4 args, treat 5th as bin_dir
-    if(ARGC GREATER 4)
-        set(bin_dir "${ARGV4}")
-    endif()
-    
-    FetchContent_Declare(
-            ${name}
-            GIT_REPOSITORY ${url}
-            GIT_TAG ${tag}
-    )
-    FetchContent_MakeAvailable(${name})
-    if(NOT src_dir STREQUAL "")
-        set(${src_dir} "${${name}_SOURCE_DIR}" PARENT_SCOPE)
-    endif()
-
-    if(NOT bin_dir STREQUAL "")
-        set(${bin_dir} "${${name}_BINARY_DIR}" PARENT_SCOPE)
-    endif()
-    set_target_properties(${name} PROPERTIES FOLDER "engine/external")
-endfunction()
 # Asset and Shader Management Functions
 set(ASSET_SOURCE_DIR "${CMAKE_SOURCE_DIR}/game/assets")
 

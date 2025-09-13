@@ -1,0 +1,61 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug Vulkan Game (MSVC)",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/out/build/windows-default/bin/Debug/game_vk.exe",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/out/build/windows-default/bin/Debug",
+            "environment": [],
+            "console": "integratedTerminal",
+            "preLaunchTask": "CMake: build (windows-default)",
+            "internalConsoleOptions": "neverOpen"
+        },
+           {
+            "name": "Debug OpenGL Game (MSVC)",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/out/build/windows-default/bin/Debug/game_gl.exe",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/out/build/windows-default/bin/Debug",
+            "environment": [],
+            "console": "integratedTerminal",
+            "preLaunchTask": "CMake: build (windows-default)",
+            "internalConsoleOptions": "neverOpen"
+        },
+        {
+            "name": "Debug OpenGL Game (Clang)",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/out/build/windows-clang-debug/bin/Debug/game_gl.exe",
+            "args": [],
+            "cwd": "${workspaceFolder}/out/build/windows-clang-debug/bin/Debug",
+            "environment": [],
+            "console": "integratedTerminal",
+            "preLaunchTask": "CMake: build (windows-clang-debug)",
+            "stopOnEntry": false
+        },
+        {
+            "name": "Debug Vulkan Game (Clang)",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/out/build/windows-clang-debug/bin/Debug/game_vk.exe",
+            "args": [],
+            "cwd": "${workspaceFolder}/out/build/windows-clang-debug/bin/Debug",
+            "environment": [],
+            "console": "integratedTerminal",
+            "preLaunchTask": "CMake: build (windows-clang-debug)",
+            "stopOnEntry": false
+        },
+        {
+            "name": "Attach to Process (MSVC)",
+            "type": "cppvsdbg",
+            "request": "attach",
+            "processId": "${command:pickProcess}"
+        }
+    ]
+}

@@ -1,8 +1,6 @@
 #include "engine.hpp"
 #include "core/ecs.hpp"
 #include "core/renderer.hpp"
-#include "fmt/format.h"
-#include "utility/console.hpp"
 #define SDL_MAIN_USE_CALLBACKS 1
 
 #include "core/input.hpp"
