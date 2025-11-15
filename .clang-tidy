@@ -1,5 +1,5 @@
 ---
-Checks: '*,-fuchsia-*,-google-*,-zircon-*,-abseil-*,-modernize-use-trailing-return-type,-llvm-*,-llvmlibc-*,-readability-redundant-member-init,-misc-non-private-member-variables-in-classes,-modernize-use-trailing-return-type,-misc-include-cleaner'
+Checks: '*,-fuchsia-*,-google-*,-zircon-*,-abseil-*,-modernize-use-trailing-return-type,-llvm-*,-llvmlibc-*,-readability-redundant-member-init,-misc-non-private-member-variables-in-classes,-misc-include-cleaner,-hicpp-signed-bitwise,-misc-unused-parameters,-readability-simplify-boolean-expr'
 CheckOptions: [{ key: misc-non-private-member-variables-in-classes, value: IgnoreClassesWithAllMemberVariablesBeingPublic }]
 WarningsAsErrors: '*'
 HeaderFilterRegex: ''

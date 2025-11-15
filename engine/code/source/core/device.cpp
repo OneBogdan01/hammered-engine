@@ -19,7 +19,7 @@ Device::Device()
 {
   SetGraphicsAPI(io::LoadCurrentGraphicsAPI());
 
-  SDL_InitFlags flags {SDL_INIT_VIDEO};
+  constexpr SDL_InitFlags flags {SDL_INIT_VIDEO};
   SDL_SetAppMetadata(WindowTitle, "0", "HammE");
   if (SDL_Init(flags) == false)
   {
@@ -46,9 +46,9 @@ void Device::ChangeGraphicsBackend() const
   if (ImGui::Combo("Graphics API", &selectedApiIndex, apiOptions,
                    IM_ARRAYSIZE(apiOptions)))
   {
-    gfx::GRAPHICS_API chosen = (selectedApiIndex == 0)
-                                   ? gfx::GRAPHICS_API::OPENGL
-                                   : gfx::GRAPHICS_API::VULKAN;
+    const gfx::GRAPHICS_API chosen = (selectedApiIndex == 0)
+                                         ? gfx::GRAPHICS_API::OPENGL
+                                         : gfx::GRAPHICS_API::VULKAN;
 
     if (chosen != m_graphicsApi)
     {

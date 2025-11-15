@@ -1,6 +1,7 @@
 #include "engine.hpp"
 #include "core/ecs.hpp"
 #include "core/renderer.hpp"
+// NOLINT(cppcoreguidelines-macro-usage)
 #define SDL_MAIN_USE_CALLBACKS 1
 
 #include "core/input.hpp"
