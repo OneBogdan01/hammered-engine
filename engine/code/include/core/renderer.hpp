@@ -8,7 +8,7 @@ class Renderer : public ecs::System
 {
  public:
   ~Renderer() override;
-  explicit Renderer(const std::string& name) : System(name) {}
+  explicit Renderer(const std::string& name);
   void Update(f32) override;
 
   void Render() override;

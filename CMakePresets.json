@@ -5,7 +5,7 @@
       "name": "windows-msvc-debug",
       "displayName": "Windows MSVC Debug",
       "generator": "Visual Studio 17 2022",
-      "binaryDir": "${sourceDir}/build/${presetName}",
+      "binaryDir":  "${sourceDir}/out/build/${presetName}",
       "architecture": "x64",
       "cacheVariables": {
         "CMAKE_CONFIGURATION_TYPES": "Debug"
@@ -15,7 +15,7 @@
       "name": "windows-msvc-develop",
       "displayName": "Windows MSVC Develop",
       "generator": "Visual Studio 17 2022",
-      "binaryDir": "${sourceDir}/build/${presetName}",
+      "binaryDir":  "${sourceDir}/out/build/${presetName}",
       "architecture": "x64",
       "cacheVariables": {
         "CMAKE_CONFIGURATION_TYPES": "RelWithDebInfo"
@@ -25,7 +25,7 @@
       "name": "windows-msvc-release",
       "displayName": "Windows MSVC Release",
       "generator": "Visual Studio 17 2022",
-      "binaryDir": "${sourceDir}/build/${presetName}",
+      "binaryDir":  "${sourceDir}/out/build/${presetName}",
       "architecture": "x64",
       "cacheVariables": {
         "CMAKE_CONFIGURATION_TYPES": "Release"
