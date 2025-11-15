@@ -17,6 +17,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
+          ignore: '.github | engine/external'
+        
           style: file
           files-changed-only: false
           thread-comments: false
