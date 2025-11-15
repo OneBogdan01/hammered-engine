@@ -6,21 +6,16 @@
 #include "external/imgui_impl.hpp"
 #include "platform/opengl/imgui_impl_gl.hpp"
 #include "platform/opengl/opengl_gl.hpp"
-#include "platform/opengl/shader_gl.hpp"
 
 #include "utility/console.hpp"
 
-#include <vector>
-
-#include <glm/gtc/type_ptr.hpp>
-namespace hm::internal
+namespace
 {
 SDL_GLContext glContext {nullptr};
 SDL_Window* window {nullptr};
-} // namespace hm::internal
+} // namespace
 
 using namespace hm;
-using namespace hm::internal;
 
 Device::~Device()
 {
@@ -29,7 +24,7 @@ Device::~Device()
 // TODO
 void Device::ResizeSwapchain() {}
 
-void Device::Initialize()
+void Device::Initialize() const
 {
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 6);
@@ -38,7 +33,8 @@ void Device::Initialize()
   SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 16);
   SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
-  window = SDL_CreateWindow(WindowTitle, m_windowSize.x, m_windowSize.y,
+  window = SDL_CreateWindow(WindowTitle, static_cast<int32_t>(m_windowSize.x),
+                            static_cast<int32_t>(m_windowSize.y),
                             SDL_INIT_VIDEO | SDL_WINDOW_OPENGL);
   if (window == nullptr)
   {
@@ -53,7 +49,7 @@ void Device::Initialize()
     return;
   }
   if (gladLoadGLLoader(reinterpret_cast<GLADloadproc>(SDL_GL_GetProcAddress)) ==
-      false)
+      0)
   {
     log::Error("Failed to initialize GLAD");
     return;
@@ -88,7 +84,8 @@ void Device::DestroyBackend()
 void Device::SetViewportSize(const glm::uvec2& windowSize,
                              const glm::ivec2& windowPosition)
 {
-  glViewport(windowPosition.x, windowPosition.y, windowSize.x, windowSize.y);
+  glViewport(windowPosition.x, windowPosition.y, static_cast<i32>(windowSize.x),
+             static_cast<i32>(windowSize.y));
 }
 // void Device::PreRender()
 //{

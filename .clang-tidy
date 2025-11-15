@@ -19,6 +19,7 @@ Checks: >
   -cppcoreguidelines-owning-memory,
   -readability-redundant-member-init,
   -readability-simplify-boolean-expr,
+  -readability-uppercase-literal-suffix,
   -misc-non-private-member-variables-in-classes,
   -misc-unused-parameters
 CheckOptions: [{ key: misc-non-private-member-variables-in-classes, value: IgnoreClassesWithAllMemberVariablesBeingPublic }]

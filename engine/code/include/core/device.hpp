@@ -25,7 +25,7 @@ class Device
   Device();
   ~Device();
 
-  void EndFrame();
+  static void EndFrame();
   // TODO move to editor
   void ChangeGraphicsBackend() const;
 
@@ -43,16 +43,16 @@ class Device
   void SetCloseRequest(bool closeRequest) { m_bShouldClose = closeRequest; }
   void SetMinimize(bool minimize) { m_bMinimized = minimize; }
   void SetGraphicsAPI(gfx::GRAPHICS_API api);
-  void SetViewportSize(const glm::uvec2& windowSize,
-                       const glm::ivec2& windowPosition);
+  static void SetViewportSize(const glm::uvec2& windowSize,
+                              const glm::ivec2& windowPosition);
 
  private:
-  void DestroyBackend();
+  static void DestroyBackend();
 
-  void Initialize();
+  void Initialize() const;
 
   glm::uvec2 m_windowSize {1280, 720};
-  void ResizeSwapchain();
+  static void ResizeSwapchain();
 
   bool m_bShouldClose {false};
   bool m_bMinimized {false};
