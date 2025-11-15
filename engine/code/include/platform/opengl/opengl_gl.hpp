@@ -12,4 +12,4 @@ void MessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity,
 
 #endif
 
-} // namespace tale
+} // namespace hm
