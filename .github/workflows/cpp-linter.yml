@@ -39,7 +39,7 @@ jobs:
           files-changed-only: false
           step-summary: true
           thread-comments: true
-          database: .
+          tidy-checks: ''
       
       - name: Fail fast?!
         if: steps.linter.outputs.checks-failed != 0
