@@ -1,4 +1,3 @@
-
 #pragma once
 #include "types_vk.hpp"
 namespace vkutil

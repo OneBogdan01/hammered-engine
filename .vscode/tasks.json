@@ -1,0 +1,105 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "type": "cmake",
+            "label": "CMake: configure (windows-default)",
+            "command": "configure",
+            "preset": "windows-default",
+            "group": "build",
+            "problemMatcher": [],
+            "detail": "Configure CMake with windows-default preset (MSVC/Ninja)"
+        },
+        {
+            "type": "cmake",
+            "label": "CMake: build (windows-default)",
+            "command": "build",
+            "targets": [
+                "all"
+            ],
+            "preset": "windows-default",
+            "group": "build",
+            "problemMatcher": [],
+            "detail": "Build with windows-default preset (MSVC/Ninja)",
+            "dependsOn": "CMake: configure (windows-default)",
+            "dependsOrder": "sequence"
+        },
+        {
+            "type": "cmake",
+            "label": "CMake: configure (windows-clang-debug)",
+            "command": "configure",
+            "preset": "windows-clang-debug",
+            "group": "build",
+            "problemMatcher": [],
+            "detail": "Configure CMake with windows-clang-debug preset"
+        },
+        {
+            "type": "cmake",
+            "label": "CMake: build (windows-clang-debug)",
+            "command": "build",
+            "targets": [
+                "all"
+            ],
+            "preset": "windows-clang-debug",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [],
+            "detail": "Build with windows-clang-debug preset (Clang)",
+            "dependsOn": "CMake: configure (windows-clang-debug)",
+            "dependsOrder": "sequence"
+        },
+        {
+            "type": "cmake",
+            "label": "CMake: configure (windows-clang-release)",
+            "command": "configure",
+            "preset": "windows-clang-release",
+            "group": "build",
+            "problemMatcher": [],
+            "detail": "Configure CMake with windows-clang-release preset"
+        },
+        {
+            "type": "cmake",
+            "label": "CMake: build (windows-clang-release)",
+            "command": "build",
+            "targets": [
+                "all"
+            ],
+            "preset": "windows-clang-release",
+            "group": "build",
+            "problemMatcher": [],
+            "detail": "Build with windows-clang-release preset (Clang)",
+            "dependsOn": "CMake: configure (windows-clang-release)",
+            "dependsOrder": "sequence"
+        },
+        {
+            "type": "cmake",
+            "label": "CMake: clean (windows-default)",
+            "command": "build",
+            "targets": [
+                "clean"
+            ],
+            "preset": "windows-default",
+            "group": "build",
+            "problemMatcher": [],
+            "detail": "Clean build with windows-default preset",
+            "dependsOn": "CMake: configure (windows-default)",
+            "dependsOrder": "sequence"
+        },
+        {
+            "type": "cmake",
+            "label": "CMake: clean (windows-clang-debug)",
+            "command": "build",
+            "targets": [
+                "clean"
+            ],
+            "preset": "windows-clang-debug",
+            "group": "build",
+            "problemMatcher": [],
+            "detail": "Clean build with windows-clang-debug preset",
+            "dependsOn": "CMake: configure (windows-clang-debug)",
+            "dependsOrder": "sequence"
+        }
+    ]
+}

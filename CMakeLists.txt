@@ -36,8 +36,7 @@ endif()
 # Adds engine code and externals
 add_subdirectory(engine)
 
-# This is where it compiles shaders to .spv
-add_subdirectory(game)
+
 # Sets up the backends .exes
 add_game_backends("${GAME_BACKENDS}")
 

@@ -66,7 +66,7 @@ struct GPUSceneData
   glm::vec4 sunlightColor;
 };
 
-void init_vulkan(SDL_Window* window, bool debug);
+void InitVulkan(SDL_Window* window, bool debug);
 FrameData& get_current_frame();
 void immediate_submit(std::function<void(VkCommandBuffer cmd)>&& function);
 

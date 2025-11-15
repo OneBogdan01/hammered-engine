@@ -1,7 +1,6 @@
 #pragma once
 
 #include <SDL3/SDL_events.h>
-
 class Camera;
 namespace hm
 {

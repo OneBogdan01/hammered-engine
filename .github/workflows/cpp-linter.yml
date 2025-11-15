@@ -1,0 +1,46 @@
+name: cpp-linter
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  cpp-linter:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: recursive
+      
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt install xorg-dev libglu1-mesa-dev
+      
+      - name: Generate compile_commands.json
+        run: |
+          cmake -B build \
+            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DENABLE_GL_BACKEND=ON \
+            -DENABLE_VK_BACKEND=ON
+          cp build/compile_commands.json .
+      
+      - uses: cpp-linter/cpp-linter-action@main
+        id: linter
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          ignore: '.github | engine/external | build'
+          style: file
+          files-changed-only: false
+          step-summary: true
+          thread-comments: true
+          tidy-checks: ''
+      
+      - name: Fail fast?!
+        if: steps.linter.outputs.checks-failed != 0
+        run: exit 1

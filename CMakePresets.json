@@ -5,7 +5,7 @@
       "name": "windows-msvc-debug",
       "displayName": "Windows MSVC Debug",
       "generator": "Visual Studio 17 2022",
-      "binaryDir": "${sourceDir}/build/${presetName}",
+      "binaryDir":  "${sourceDir}/out/build/${presetName}",
       "architecture": "x64",
       "cacheVariables": {
         "CMAKE_CONFIGURATION_TYPES": "Debug"
@@ -15,7 +15,7 @@
       "name": "windows-msvc-develop",
       "displayName": "Windows MSVC Develop",
       "generator": "Visual Studio 17 2022",
-      "binaryDir": "${sourceDir}/build/${presetName}",
+      "binaryDir":  "${sourceDir}/out/build/${presetName}",
       "architecture": "x64",
       "cacheVariables": {
         "CMAKE_CONFIGURATION_TYPES": "RelWithDebInfo"
@@ -25,10 +25,80 @@
       "name": "windows-msvc-release",
       "displayName": "Windows MSVC Release",
       "generator": "Visual Studio 17 2022",
-      "binaryDir": "${sourceDir}/build/${presetName}",
+      "binaryDir":  "${sourceDir}/out/build/${presetName}",
       "architecture": "x64",
       "cacheVariables": {
         "CMAKE_CONFIGURATION_TYPES": "Release"
+      }
+    },
+    {
+      "name": "windows-default",
+      "displayName": "Windows x64 Debug (MSVC/Ninja)",
+      "description": "Sets Ninja generator with MSVC compiler, x64 architecture, debug build type",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/out/build/${presetName}",
+      "architecture": {
+        "value": "x64",
+        "strategy": "external"
+      },
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
+        "CMAKE_C_COMPILER": "cl.exe",
+        "CMAKE_CXX_COMPILER": "cl.exe"
+      },
+      "environment": {
+        "CC": "cl.exe",
+        "CXX": "cl.exe"
+      },
+      "vendor": {
+        "microsoft.com/VisualStudioSettings/CMake/1.0": {
+          "hostOS": [ "Windows" ]
+        }
+      }
+    },
+    {
+      "name": "windows-clang-debug",
+      "displayName": "Windows x64 Debug (Clang)",
+      "description": "Sets Ninja generator with Clang compiler, x64 architecture, build and install directory, debug build type",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/out/build/${presetName}",
+      "architecture": {
+        "value": "x64",
+        "strategy": "external"
+      },
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++"
+      },
+      "vendor": {
+        "microsoft.com/VisualStudioSettings/CMake/1.0": {
+          "hostOS": [ "Windows" ]
+        }
+      }
+    },
+    {
+      "name": "windows-clang-release",
+      "displayName": "Windows x64 Release (Clang)",
+      "description": "Sets Ninja generator with Clang compiler, x64 architecture, build and install directory, release build type",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/out/build/${presetName}",
+      "architecture": {
+        "value": "x64",
+        "strategy": "external"
+      },
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++"
+      },
+      "vendor": {
+        "microsoft.com/VisualStudioSettings/CMake/1.0": {
+          "hostOS": [ "Windows" ]
+        }
       }
     },
     {
@@ -47,8 +117,41 @@
         },
         "microsoft.com/VisualStudioRemoteSettings/CMake/1.0": {
           "sourceDir": "$env{HOME}/.vs/$ms{projectDirName}"
+        }
       }
-      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "windows-msvc-debug",
+      "configurePreset": "windows-msvc-debug",
+      "configuration": "Debug"
+    },
+    {
+      "name": "windows-msvc-develop",
+      "configurePreset": "windows-msvc-develop",
+      "configuration": "RelWithDebInfo"
+    },
+    {
+      "name": "windows-msvc-release",
+      "configurePreset": "windows-msvc-release",
+      "configuration": "Release"
+    },
+    {
+      "name": "windows-default",
+      "configurePreset": "windows-default"
+    },
+    {
+      "name": "windows-clang-debug",
+      "configurePreset": "windows-clang-debug"
+    },
+    {
+      "name": "windows-clang-release",
+      "configurePreset": "windows-clang-release"
+    },
+    {
+      "name": "linux-default",
+      "configurePreset": "linux-default"
     }
   ]
 }

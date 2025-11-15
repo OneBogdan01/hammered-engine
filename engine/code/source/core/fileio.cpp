@@ -94,7 +94,7 @@ gfx::GRAPHICS_API LoadGraphicsAPIFromConfig()
   {
     if (line.find("graphics_api=") == 0)
     {
-      std::string value = line.substr(strlen("graphics_api="));
+      const std::string value = line.substr(strlen("graphics_api="));
       if (value == "VULKAN")
         result = gfx::GRAPHICS_API::VULKAN;
       else

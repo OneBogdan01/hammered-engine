@@ -1,10 +1,12 @@
 #include "engine.hpp"
 
 #include "core/ecs.hpp"
-#include "core/fileio.hpp"
 #include "core/input.hpp"
 #include "camera.hpp"
+#include "core/device.hpp"
 #include "utility/console.hpp"
+
+#include <chrono>
 
 using namespace hm;
 using namespace hm::log;
@@ -32,9 +34,11 @@ void Engine::Init()
 SDL_AppResult Engine::Run()
 {
   if (m_pDevice->m_bShouldClose == true)
+  {
     return SDL_APP_SUCCESS;
+  }
 
-  auto start = std::chrono::system_clock::now();
+  const auto start = std::chrono::system_clock::now();
 
   // do not draw if we are minimized
   if (m_pDevice->m_bMinimized)
@@ -60,7 +64,7 @@ SDL_AppResult Engine::Run()
   // convert to microseconds (integer), and then come back to miliseconds
   auto elapsed =
       std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-  stats.frametime = elapsed.count() / 1000.f;
+  stats.frametime = static_cast<f32>(elapsed.count()) / 1000.f;
   return SDL_APP_CONTINUE;
 }
 

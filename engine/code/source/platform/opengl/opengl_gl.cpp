@@ -2,10 +2,9 @@
 
 #include "utility/console.hpp"
 #ifdef DEBUG
-void hm::MessageCallback(GLenum source, GLenum type, GLuint id,
-                           GLenum severity, [[maybe_unused]] GLsizei length,
-                           const GLchar* message,
-                           [[maybe_unused]] const void* user_param)
+void hm::MessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity,
+                         [[maybe_unused]] GLsizei length, const GLchar* message,
+                         [[maybe_unused]] const void* user_param)
 {
   const char* srcStr = "UNKNOWN";
   switch (source)
