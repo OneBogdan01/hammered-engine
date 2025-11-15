@@ -24,7 +24,7 @@ Device::~Device()
 // TODO
 void Device::ResizeSwapchain() {}
 
-void Device::Initialize() const
+void Device::Initialize()
 {
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 6);
