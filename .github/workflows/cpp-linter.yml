@@ -21,7 +21,7 @@ jobs:
         
           style: file
           files-changed-only: false
-          thread-comments: false
+          thread-comments: true
 
       - name: Fail fast?!
         if: steps.linter.outputs.checks-failed != 0
