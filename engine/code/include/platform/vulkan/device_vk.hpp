@@ -12,7 +12,7 @@ struct DeletionQueue
 
   void push_function(std::function<void()>&& function)
   {
-    deletors.push_back(function);
+    deletors.push_back(std::move(function));
   }
 
   void flush()
@@ -97,7 +97,7 @@ struct GLTFMetallic_Roughness
     glm::vec4 colorFactors;
     glm::vec4 metal_rough_factors;
     // padding, we need it anyway for uniform buffers
-    glm::vec4 extra[14];
+    std::array<glm::vec4, 14> extra;
   };
 
   struct MaterialResources

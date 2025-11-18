@@ -4,9 +4,8 @@
 
 #include <filesystem>
 #include <SDL3/SDL_init.h>
-namespace hm
-{
-namespace io
+
+namespace hm::io
 {
 
 std::string GetPath(const char* path);
@@ -28,5 +27,4 @@ inline constexpr std::string_view VkExe {};
 #endif
 
 constexpr std::string_view AssetPath {"assets/"};
-} // namespace io
-} // namespace hm
+} // namespace hm::io

@@ -21,8 +21,87 @@ Checks: >
   -readability-simplify-boolean-expr,
   -readability-uppercase-literal-suffix,
   -misc-non-private-member-variables-in-classes,
-  -misc-unused-parameters
-CheckOptions: [{ key: misc-non-private-member-variables-in-classes, value: IgnoreClassesWithAllMemberVariablesBeingPublic }]
+  -misc-unused-parameters,
+  -cppcoreguidelines-pro-type-member-init
+CheckOptions:
+ # Ignore public member structs
+  - key: misc-non-private-member-variables-in-classes
+    value: IgnoreClassesWithAllMemberVariablesBeingPublic
+  
+  # Namespaces: lower_case (hm, ecs, log, input)
+  - key: readability-identifier-naming.NamespaceCase
+    value: lower_case
+  
+  # Classes/Structs: CamelCase (Engine, Device, Camera)
+  - key: readability-identifier-naming.ClassCase
+    value: CamelCase
+  
+  - key: readability-identifier-naming.StructCase
+    value: CamelCase
+  
+  # Functions: CamelCase (Init, Run, Shutdown)
+  - key: readability-identifier-naming.FunctionCase
+    value: CamelCase
+  
+  - key: readability-identifier-naming.MethodCase
+    value: CamelCase
+  
+  # Local Variables: camelBack (start, end, elapsed, camera)
+  - key: readability-identifier-naming.VariableCase
+    value: camelBack
+  
+  - key: readability-identifier-naming.LocalVariableCase
+    value: camelBack
+  
+  # Parameters: camelBack
+  - key: readability-identifier-naming.ParameterCase
+    value: camelBack
+  
+  # Private/Protected Members: m_ prefix + camelBack
+  # (m_pDevice, m_pInput, m_bShouldClose)
+  - key: readability-identifier-naming.PrivateMemberPrefix
+    value: m_
+  
+  - key: readability-identifier-naming.PrivateMemberCase
+    value: camelBack
+  
+  - key: readability-identifier-naming.ProtectedMemberPrefix
+    value: m_
+  
+  - key: readability-identifier-naming.ProtectedMemberCase
+    value: camelBack
+  
+  # Public Members: camelBack (no prefix for public members like stats.frametime)
+  - key: readability-identifier-naming.PublicMemberCase
+    value: camelBack
+  
+  # Constants: UPPER_CASE
+  - key: readability-identifier-naming.ConstantCase
+    value: UPPER_CASE
+  
+  - key: readability-identifier-naming.ConstexprVariableCase
+    value: UPPER_CASE
+  
+  - key: readability-identifier-naming.GlobalConstantCase
+    value: UPPER_CASE
+  
+  - key: readability-identifier-naming.StaticConstantCase
+    value: UPPER_CASE
+  
+  # Macros: UPPER_CASE with HM_ prefix
+  - key: readability-identifier-naming.MacroDefinitionCase
+    value: UPPER_CASE
+  
+  - key: readability-identifier-naming.MacroDefinitionPrefix
+    value: HM_
+  
+  # Enums: UPPER_CASE
+  - key: readability-identifier-naming.EnumCase
+    value: UPPER_CASE
+  
+  - key: readability-identifier-naming.EnumConstantCase
+    value: UPPER_CASE
+
 WarningsAsErrors: '*'
 HeaderFilterRegex: ''
 FormatStyle: none

@@ -1,6 +1,19 @@
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set(VKB_WSI_SELECTION "XCB" CACHE STRING "Select WSI target (XCB, XLIB, WAYLAND, D2D)")
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+if(CMAKE_EXPORT_COMPILE_COMMANDS)
+    if(CMAKE_GENERATOR MATCHES "Ninja" OR CMAKE_GENERATOR MATCHES "Unix Makefiles")
+        add_custom_target(copy_compile_commands ALL
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            ${CMAKE_BINARY_DIR}/compile_commands.json
+            ${CMAKE_SOURCE_DIR}/compile_commands.json
+            DEPENDS ${CMAKE_BINARY_DIR}/compile_commands.json
+            COMMENT "Copying compile_commands.json to source directory"
+        )
+    endif()
+endif()
 
 if(MSVC)
     add_compile_options(/MP)
@@ -9,23 +22,13 @@ if(MSVC)
     set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} /O2 /Zi /DDEVELOP /MD")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /O2 /DNDEBUG /MD")
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-    # Configuring some global settings
-    set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-    # Copy it to the source directory for VS Code
-    if(CMAKE_EXPORT_COMPILE_COMMANDS)
-        add_custom_target(copy_compile_commands ALL
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            ${CMAKE_BINARY_DIR}/compile_commands.json
-            ${CMAKE_SOURCE_DIR}/compile_commands.json
-            DEPENDS ${CMAKE_BINARY_DIR}/compile_commands.json
-        )
-    endif()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -DNOMINMAX")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -O0 -DDEBUG")
     set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -O2 -g -DDEVELOP")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2 -DNDEBUG")
-endif()
 
+
+endif()
 
 
 ## Setting the dlls and .exe in the same folder

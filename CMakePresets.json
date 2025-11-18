@@ -32,8 +32,8 @@
       }
     },
     {
-      "name": "windows-default",
-      "displayName": "Windows x64 Debug (MSVC/Ninja)",
+      "name": "windows-ninja-debug",
+      "displayName": "Windows x64 Debug (Ninja)",
       "description": "Sets Ninja generator with MSVC compiler, x64 architecture, debug build type",
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/out/build/${presetName}",
@@ -42,10 +42,11 @@
         "strategy": "external"
       },
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
         "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
-        "CMAKE_C_COMPILER": "cl.exe",
-        "CMAKE_CXX_COMPILER": "cl.exe"
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "ENABLE_GL_BACKEND": "ON",
+        "ENABLE_VK_BACKEND": "ON"
       },
       "environment": {
         "CC": "cl.exe",
@@ -63,19 +64,23 @@
       "description": "Sets Ninja generator with Clang compiler, x64 architecture, build and install directory, debug build type",
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/out/build/${presetName}",
+
       "architecture": {
         "value": "x64",
         "strategy": "external"
       },
+      "environment": {
+        "CC": "clang-cl",
+        "CXX": "clang-cl"
+      },
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
-        "CMAKE_C_COMPILER": "clang",
-        "CMAKE_CXX_COMPILER": "clang++"
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}"
       },
+
       "vendor": {
         "microsoft.com/VisualStudioSettings/CMake/1.0": {
-          "hostOS": [ "Windows" ]
+          "intelliSenseMode": "windows-clang-x64"
         }
       }
     },
@@ -91,13 +96,15 @@
       },
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
-        "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
-        "CMAKE_C_COMPILER": "clang",
-        "CMAKE_CXX_COMPILER": "clang++"
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}"
+      },
+      "environment": {
+        "CC": "clang-cl",
+        "CXX": "clang-cl"
       },
       "vendor": {
         "microsoft.com/VisualStudioSettings/CMake/1.0": {
-          "hostOS": [ "Windows" ]
+          "intelliSenseMode": "windows-clang-x64"
         }
       }
     },
@@ -137,9 +144,9 @@
       "configurePreset": "windows-msvc-release",
       "configuration": "Release"
     },
-    {
-      "name": "windows-default",
-      "configurePreset": "windows-default"
+     {
+      "name": "windows-ninja-debug",
+      "configurePreset": "windows-ninja-debug"
     },
     {
       "name": "windows-clang-debug",

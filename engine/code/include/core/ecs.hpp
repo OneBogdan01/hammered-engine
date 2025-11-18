@@ -1,4 +1,5 @@
 ﻿#pragma once
+#include "utility/macros.hpp"
 
 namespace hm
 {
@@ -16,6 +17,7 @@ struct System
 {
   System(const std::string& name);
   virtual ~System() = default;
+  HM_NON_COPYABLE_NON_MOVABLE(System);
 
   virtual void Update(f32) = 0;
   virtual void Render() = 0;

@@ -1,6 +1,6 @@
 ﻿#pragma once
 #include "ecs.hpp"
-
+#include "utility/macros.hpp"
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_init.h>
 namespace hm::utility
@@ -12,8 +12,9 @@ namespace hm::input
 {
 class InputHandler
 {
+  HM_VIRTUAL_BASE_CLASS(InputHandler);
+
  public:
-  virtual ~InputHandler() = default;
   virtual void HandleInput(SDL_Event* event) = 0;
 };
 class Input
