@@ -4,7 +4,7 @@
 
 #include "SDL3/SDL_assert.h"
 
-#include "utility/console.hpp"
+#include "utility/logger.hpp"
 #include <stb_image.h>
 #include <volk.h>
 #include "platform/vulkan/device_vk.hpp"

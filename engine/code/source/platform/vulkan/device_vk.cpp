@@ -27,7 +27,7 @@
 
 #include "platform/vulkan/pipelines_vk.hpp"
 
-#include "utility/console.hpp"
+#include "utility/logger.hpp"
 
 #include <glm/glm.hpp>
 

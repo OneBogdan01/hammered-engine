@@ -1,6 +1,6 @@
 #include "platform/opengl/opengl_gl.hpp"
 
-#include "utility/console.hpp"
+#include "utility/logger.hpp"
 #ifdef DEBUG
 void hm::MessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity,
                          [[maybe_unused]] GLsizei length, const GLchar* message,

@@ -2,7 +2,7 @@
 
 
 include(FetchContent)
-
+set (CMAKE_CXX_STANDARD 23)
 ## Versioning
 set( HM_VERSION_MAJOR 0 )
 set( HM_VERSION_MINOR 0 )

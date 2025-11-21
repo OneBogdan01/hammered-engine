@@ -2,7 +2,7 @@
 
 #include "engine.hpp"
 #include "core/device.hpp"
-#include "utility/console.hpp"
+#include "utility/logger.hpp"
 
 #include <glm/gtx/transform.hpp>
 #include <glm/gtx/quaternion.hpp>
