@@ -3,9 +3,10 @@
 #include "glslang_c_interface.h"
 #include "volk.h"
 #include "glslang/Public/resource_limits_c.h"
+#include "utility/logger.hpp"
 
 using namespace vkutil;
-void PrintShaderSource(const char *text)
+void PrintShaderSource(const char* text)
 {
   int line = 1;
 
@@ -28,8 +29,8 @@ void PrintShaderSource(const char *text)
 
   printf("\n");
 }
-bool vkutil::load_shader_module(const char *filePath, VkDevice device,
-                                VkShaderModule *outShaderModule)
+bool vkutil::load_shader_module(const char* filePath, VkDevice device,
+                                VkShaderModule* outShaderModule)
 {
   // open the file. With cursor at the end
   std::ifstream file(filePath, std::ios::ate | std::ios::binary);
@@ -51,7 +52,7 @@ bool vkutil::load_shader_module(const char *filePath, VkDevice device,
   file.seekg(0);
 
   // load the entire file into the buffer
-  file.read((char *)buffer.data(), fileSize);
+  file.read((char*)buffer.data(), fileSize);
 
   // now that the file is loaded into the buffer, we can close it
   file.close();
@@ -161,7 +162,7 @@ VkPipeline PipelineBuilder::build_pipeline(VkDevice device)
   if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo,
                                 nullptr, &newPipeline) != VK_SUCCESS)
   {
-    fmt::println("failed to create pipeline");
+    hm::log::Warning("failed to create pipeline");
     return VK_NULL_HANDLE; // failed to create graphics pipeline
   }
   else
@@ -287,8 +288,8 @@ void PipelineBuilder::enable_blending_alphablend()
   _colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
 }
 
-size_t hm::vk::CompileShader(glslang_stage_t stage, const char *shaderSource,
-                             ShaderModule &shaderModule)
+size_t hm::vk::CompileShader(glslang_stage_t stage, const char* shaderSource,
+                             ShaderModule& shaderModule)
 {
   std::string modifiedSource = std::string(shaderSource);
   const glslang_input_t input = {
@@ -307,7 +308,7 @@ size_t hm::vk::CompileShader(glslang_stage_t stage, const char *shaderSource,
       .resource = glslang_default_resource(),
   };
 
-  glslang_shader_t *shader = glslang_shader_create(&input);
+  glslang_shader_t* shader = glslang_shader_create(&input);
 
   if (!glslang_shader_preprocess(shader, &input))
   {
@@ -327,7 +328,7 @@ size_t hm::vk::CompileShader(glslang_stage_t stage, const char *shaderSource,
     return 0;
   }
 
-  glslang_program_t *program = glslang_program_create();
+  glslang_program_t* program = glslang_program_create();
   glslang_program_add_shader(program, shader);
 
   if (!glslang_program_link(
@@ -345,7 +346,7 @@ size_t hm::vk::CompileShader(glslang_stage_t stage, const char *shaderSource,
   glslang_program_SPIRV_get(program, shaderModule.SPIRV.data());
 
   {
-    const char *spirv_messages = glslang_program_SPIRV_get_messages(program);
+    const char* spirv_messages = glslang_program_SPIRV_get_messages(program);
 
     if (spirv_messages)
       fprintf(stderr, "%s", spirv_messages);
@@ -356,9 +357,9 @@ size_t hm::vk::CompileShader(glslang_stage_t stage, const char *shaderSource,
 
   return shaderModule.SPIRV.size();
 }
-std::string hm::vk::ReadShaderFile(const char *fileName)
+std::string hm::vk::ReadShaderFile(const char* fileName)
 {
-  FILE *file = fopen(fileName, "r");
+  FILE* file = fopen(fileName, "r");
 
   if (!file)
   {
@@ -370,7 +371,7 @@ std::string hm::vk::ReadShaderFile(const char *fileName)
   const auto bytesinfile = ftell(file);
   fseek(file, 0L, SEEK_SET);
 
-  char *buffer = (char *)alloca(bytesinfile + 1);
+  char* buffer = (char*)alloca(bytesinfile + 1);
   const size_t bytesread = fread(buffer, 1, bytesinfile, file);
   fclose(file);
 
@@ -403,7 +404,7 @@ std::string hm::vk::ReadShaderFile(const char *fileName)
 
   return code;
 }
-bool endsWith(const char *s, const char *part)
+bool endsWith(const char* s, const char* part)
 {
   const size_t sLength = strlen(s);
   const size_t partLength = strlen(part);
@@ -411,7 +412,7 @@ bool endsWith(const char *s, const char *part)
     return false;
   return strcmp(s + sLength - partLength, part) == 0;
 }
-glslang_stage_t glslangShaderStageFromFileName(const char *fileName)
+glslang_stage_t glslangShaderStageFromFileName(const char* fileName)
 {
   if (endsWith(fileName, ".vert"))
     return GLSLANG_STAGE_VERTEX;
@@ -433,8 +434,8 @@ glslang_stage_t glslangShaderStageFromFileName(const char *fileName)
 
   return GLSLANG_STAGE_VERTEX;
 }
-size_t hm::vk::CompileShaderFile(const char *file,
-                                 hm::vk::ShaderModule &shaderModule)
+size_t hm::vk::CompileShaderFile(const char* file,
+                                 hm::vk::ShaderModule& shaderModule)
 {
   if (auto shaderSource = ReadShaderFile(file); !shaderSource.empty())
     return CompileShader(glslangShaderStageFromFileName(file),
@@ -442,8 +443,8 @@ size_t hm::vk::CompileShaderFile(const char *file,
 
   return 0;
 }
-void hm::vk::CompilerShaderModule(const char *sourceFilename,
-                                  const char *destFilename)
+void hm::vk::CompilerShaderModule(const char* sourceFilename,
+                                  const char* destFilename)
 {
   ShaderModule shaderModule;
 
@@ -453,10 +454,10 @@ void hm::vk::CompilerShaderModule(const char *sourceFilename,
   SaveSPIRVBinaryFile(destFilename, shaderModule.SPIRV.data(),
                       shaderModule.SPIRV.size());
 }
-void hm::vk::SaveSPIRVBinaryFile(const char *filename, unsigned *code,
+void hm::vk::SaveSPIRVBinaryFile(const char* filename, unsigned* code,
                                  size_t size)
 {
-  FILE *f = fopen(filename, "wb");
+  FILE* f = fopen(filename, "wb");
 
   if (!f)
     return;

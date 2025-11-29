@@ -1,6 +1,6 @@
 #include "platform/opengl/shader_gl.hpp"
 
-#include "utility/console.hpp"
+#include "utility/logger.hpp"
 
 #include <filesystem>
 #include <fstream>

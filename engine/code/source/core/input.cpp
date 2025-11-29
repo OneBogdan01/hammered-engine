@@ -3,7 +3,7 @@
 #include "camera.hpp"
 #include "engine.hpp"
 #include "core/device.hpp"
-#include "utility/console.hpp"
+#include "utility/logger.hpp"
 
 #include <SDL3/SDL_init.h>
 #include <backends/imgui_impl_sdl3.h>

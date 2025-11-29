@@ -10,10 +10,10 @@ find_package(OpenGL)
 
 # vulkan
 ## glslang
-## Disbale optimization for now
+## Disable optimization for now
 set(ENABLE_OPT OFF CACHE BOOL "" FORCE)
-set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)  # Force static linking
-set(ENABLE_GLSLANG_BINARIES OFF CACHE BOOL "" FORCE)  # Don't build executables
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)  
+set(ENABLE_GLSLANG_BINARIES OFF CACHE BOOL "" FORCE) 
 
 add_subdirectory(glslang)
 target_include_directories(glslang PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/glslang/glslang/Include)
@@ -120,7 +120,7 @@ target_sources(vkbootstrap PRIVATE
 
 target_include_directories(vkbootstrap PUBLIC vkbootstrap)
 target_link_libraries(vkbootstrap PUBLIC volk $<$<BOOL:UNIX>:${CMAKE_DL_LIBS}>)
-set_property(TARGET vkbootstrap PROPERTY CXX_STANDARD 20)
+set_property(TARGET vkbootstrap PROPERTY CXX_STANDARD 23)
 set_target_properties(vkbootstrap PROPERTIES FOLDER "engine/external")
 
 # SDL3
@@ -243,9 +243,7 @@ target_include_directories(vma INTERFACE vma)
 add_library(EnTT INTERFACE)
 target_include_directories(EnTT INTERFACE entt)
 
-# fmt
-add_subdirectory(fmt)
-set_target_properties(fmt PROPERTIES FOLDER "engine/external")
+
 
 # glad
 add_library(glad STATIC ${CMAKE_CURRENT_SOURCE_DIR}/glad/src/glad.c)

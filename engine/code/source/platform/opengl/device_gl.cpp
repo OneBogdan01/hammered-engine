@@ -7,7 +7,7 @@
 #include "platform/opengl/imgui_impl_gl.hpp"
 #include "platform/opengl/opengl_gl.hpp"
 
-#include "utility/console.hpp"
+#include "utility/logger.hpp"
 
 namespace
 {

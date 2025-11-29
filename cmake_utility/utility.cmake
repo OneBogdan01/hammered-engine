@@ -175,7 +175,7 @@ function(add_game_backends backends)
         exec_macro_for(${engine} "${backend}")
 
 
-        set_property(TARGET ${target} PROPERTY CXX_STANDARD 20)
+        set_property(TARGET ${target} PROPERTY CXX_STANDARD 23)
         configure_assets_for(${target})
 
         list(APPEND game_exes ${target})

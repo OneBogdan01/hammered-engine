@@ -11,7 +11,6 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <entt.hpp>
-#include <fmt/core.h>
 #include <imgui.h>
 #include <SDL3/SDL.h>
 #include <tiny_gltf.h>

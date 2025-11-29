@@ -942,7 +942,7 @@ void GLTFMetallic_Roughness::build_pipelines()
           io::GetPath("shaders/mesh.vert.vk.spv").c_str(), _device,
           &meshVertexShader))
   {
-    fmt::println("Error when building the vertex shader module");
+    hm::log::Error("Failed building the vertex shader module");
   }
 
   VkPushConstantRange matrixRange {};

@@ -1,4 +1,3 @@
-
 # Add dependencies
 add_subdirectory(external)
 add_subdirectory(code)
@@ -11,7 +10,6 @@ foreach(backend ${GAME_BACKENDS})
         PUBLIC
             glm
             stb_image
-            fmt::fmt
             SDL3::SDL3
             imgui_core
             tinygltf
@@ -42,6 +40,5 @@ foreach(backend ${GAME_BACKENDS})
     target_precompile_headers(${engine_target} PUBLIC
         "$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/code/include/pch.hpp>"
     )
-    # Set Visual Studio folder
     set_target_properties(${engine_target} PROPERTIES FOLDER "engine")
 endforeach()

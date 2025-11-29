@@ -4,7 +4,7 @@
 #include "core/input.hpp"
 #include "camera.hpp"
 #include "core/device.hpp"
-#include "utility/console.hpp"
+#include "utility/logger.hpp"
 
 #include <chrono>
 
@@ -29,6 +29,16 @@ void Engine::Init()
   auto& camera =
       m_pEntityComponentSystem->CreateSystem<Camera>("Camera Editor");
   m_pInput->AddInputHandler(camera);
+
+  Logger logger;
+  // console
+  logger.m_sinks.emplace_back(std::make_unique<ConsoleSink>());
+  // file
+
+  logger.Warning("Warning");
+  logger.Info("Some info");
+  logger.m_sinks.emplace_back(std::make_unique<FileSink>("log.txt"));
+  logger.Info("Will log to both of the sinks");
 }
 
 SDL_AppResult Engine::Run()

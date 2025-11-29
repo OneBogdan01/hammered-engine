@@ -1,6 +1,6 @@
 #pragma once
 #include "core/device.hpp"
-#include "utility/console.hpp"
+#include "utility/logger.hpp"
 
 #include <filesystem>
 #include <SDL3/SDL_init.h>
