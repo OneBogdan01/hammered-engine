@@ -1,7 +1,9 @@
 #pragma once
 #include "external/tracy_impl.hpp"
 
+#include <print>
 #include <format>
+#include <mutex>
 
 namespace hm::log
 {

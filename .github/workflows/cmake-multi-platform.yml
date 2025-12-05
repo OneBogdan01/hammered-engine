@@ -21,10 +21,15 @@ jobs:
           submodules: recursive
       
       - if: ${{ matrix.platform == 'ubuntu' }}
-        name: Install RandR headers
+        name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt install xorg-dev libglu1-mesa-dev
+          sudo apt-get install -y \
+            clang-18 \
+            libc++-18-dev \
+            libc++abi-18-dev \
+            xorg-dev \
+            libglu1-mesa-dev
       
       - if: ${{ matrix.platform == 'windows' }}
         name: Setup MSVC
@@ -45,6 +50,10 @@ jobs:
         name: Configure and build
         run: |
           cmake -B"build/${{ matrix.platform }}" \
+            -DCMAKE_C_COMPILER=clang-18 \
+            -DCMAKE_CXX_COMPILER=clang++-18 \
+            -DCMAKE_CXX_FLAGS="-stdlib=libc++" \
+            -DCMAKE_EXE_LINKER_FLAGS="-stdlib=libc++ -lc++abi" \
             -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
             -DENABLE_GL_BACKEND=ON \
             -DENABLE_VK_BACKEND=ON
