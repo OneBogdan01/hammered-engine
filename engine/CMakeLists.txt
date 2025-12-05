@@ -1,3 +1,4 @@
+add_library(hammered_engine_common INTERFACE)
 # Add dependencies
 add_subdirectory(external)
 add_subdirectory(code)
@@ -8,6 +9,7 @@ foreach(backend ${GAME_BACKENDS})
     # Common libraries for all backends
     target_link_libraries(${engine_target}
         PUBLIC
+            hammered_engine_common
             glm
             stb_image
             SDL3::SDL3
@@ -17,6 +19,7 @@ foreach(backend ${GAME_BACKENDS})
             glslang::glslang
             glslang::SPIRV
             glslang::glslang-default-resource-limits
+            Tracy::TracyClient
     )
 
     # Backend-specific libraries

@@ -10,12 +10,16 @@ set( HM_VERSION_PATCH 1 )
 
 set( HM_VERSION ${HM_VERSION_MAJOR}.${HM_VERSION_MINOR}.${HM_VERSION_PATCH})
 
-project(hammered_template VERSION ${HM_VERSION})
+project(hammered_engine VERSION ${HM_VERSION})
 ## Keep it tidy
 include(cmake_utility/utility.cmake)
 
 # Backend selection
 set(GAME_BACKENDS "")
+
+option(HM_EDITOR "Build editor configuration" OFF)
+
+
 
 option(ENABLE_GL_BACKEND "Build with OpenGL backend" ON)
 option(ENABLE_VK_BACKEND "Build with Vulkan backend" ON)
@@ -35,6 +39,11 @@ endif()
 
 # Adds engine code and externals
 add_subdirectory(engine)
+
+# Editor defines
+if (HM_EDITOR)
+    target_compile_definitions(hammered_engine_common INTERFACE HM_EDITOR=1)
+endif()
 
 
 # Sets up the backends .exes
