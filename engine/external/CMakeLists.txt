@@ -66,6 +66,15 @@ elseif(UNIX)
     endif()
 endif()
 
+# tracy - profiler integration
+# https://github.com/wolfpld/tracy
+option(TRACY_ENABLE "" OFF)
+option(TRACY_ON_DEMAND "" ON)
+
+if(CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+    set(TRACY_ENABLE ON CACHE BOOL "" FORCE)
+endif()
+add_subdirectory(tracy)
 
 # volk
 set(VOLK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/volk")

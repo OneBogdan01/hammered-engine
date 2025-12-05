@@ -1,4 +1,6 @@
 #pragma once
+#include "external/tracy_impl.hpp"
+
 #include <print>
 #include <format>
 #include <mutex>
@@ -17,27 +19,37 @@ constexpr const char* reset = "\033[0m";
 constexpr const char* green = "\033[32m";
 constexpr const char* red = "\033[31m";
 constexpr const char* yellow = "\033[33m";
+constexpr const char* purple = "\033[37m";
 } // namespace color
-
 template<typename... T>
 static void Info(std::format_string<T...> fs, T&&... args)
 {
-  std::print("{}[Info] {}{}\n", color::green,
-             std::format(fs, std::forward<T>(args)...), color::reset);
+  HM_ZONE_SCOPED_N("Log::Info");
+  std::print("{}[Info]{} {}\n", color::green, color::reset,
+             std::format(fs, std::forward<T>(args)...));
 }
 
 template<typename... T>
 static void Error(std::format_string<T...> fs, T&&... args)
 {
-  std::print("{}[Error] {}{}\n", color::red,
-             std::format(fs, std::forward<T>(args)...), color::reset);
+  HM_ZONE_SCOPED_N("Log::Error");
+  std::print("{}[Error]{} {}\n", color::red, color::reset,
+             std::format(fs, std::forward<T>(args)...));
 }
 
 template<typename... T>
 static void Warning(std::format_string<T...> fs, T&&... args)
 {
-  std::print("{}[Warning] {}{}\n", color::yellow,
-             std::format(fs, std::forward<T>(args)...), color::reset);
+  HM_ZONE_SCOPED_N("Log::Warning");
+  std::print("{}[Warning]{} {}\n", color::yellow, color::reset,
+             std::format(fs, std::forward<T>(args)...));
+}
+template<typename... T>
+static void Debug(std::format_string<T...> fs, T&&... args)
+{
+  HM_ZONE_SCOPED_N("Log::Debug");
+  std::print("{}[Debug]{} {}\n", color::purple, color::reset,
+             std::format(fs, std::forward<T>(args)...));
 }
 
 struct LogMessage

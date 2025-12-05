@@ -23,3 +23,6 @@
 [submodule "engine/external/glslang"]
 	path = engine/external/glslang
 	url = https://github.com/KhronosGroup/glslang.git
+[submodule "engine/external/tracy"]
+	path = engine/external/tracy
+	url = https://github.com/wolfpld/tracy

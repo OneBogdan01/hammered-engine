@@ -3,6 +3,7 @@
 // TODO replace with ktx
 
 #include "SDL3/SDL_assert.h"
+#include "external/tracy_impl.hpp"
 
 #include "utility/logger.hpp"
 #include <stb_image.h>
@@ -132,44 +133,80 @@ VkSamplerMipmapMode extract_mipmap_mode(int32_t filter)
     default:
       return VK_SAMPLER_MIPMAP_MODE_LINEAR;
   }
-}
-// TODO this is super slow for now
+} // TODO this is super slow for now
 std::optional<std::vector<std::shared_ptr<hm::MeshAsset>>> hm::loadGltfMeshes(
     const std::filesystem::path& filePath)
 {
-  log::Info("Loading GLTF: {}", filePath.string());
+  HM_ZONE_SCOPED;
+  HM_ZONE_TEXT(filePath.string().c_str(), filePath.string().size());
+
+  log::Info("=== Loading GLTF: {} ===", filePath.string());
 
   Model model;
   TinyGLTF loader;
   std::string err;
   std::string warn;
-  bool ret = loader.LoadBinaryFromFile(&model, &err, &warn, filePath.string());
+
+  bool ret;
+  {
+    HM_ZONE_SCOPED_N("Load Binary File");
+    auto start = std::chrono::high_resolution_clock::now();
+    ret = loader.LoadBinaryFromFile(&model, &err, &warn, filePath.string());
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration =
+        std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    log::Info("  Binary load: {} us", duration.count());
+  }
 
   if (!warn.empty())
   {
-    log::Info("{}", warn.c_str());
+    log::Warning("  GLTF warning: {}", warn);
   }
 
   if (!err.empty())
   {
-    log::Error("{}", err.c_str());
+    log::Error("  GLTF error: {}", err);
   }
-  if (ret == false)
+  if (!ret)
   {
     log::Error("Failed to parse GLTF file: {}", filePath.string());
     return {};
   }
+
+  log::Info("  Found {} mesh(es), {} buffer(s), {} accessor(s)",
+            model.meshes.size(), model.buffers.size(), model.accessors.size());
+
   std::vector<std::shared_ptr<MeshAsset>> meshes;
   std::vector<uint32_t> indices;
   std::vector<Vertex> vertices;
-  for (auto& mesh : model.meshes)
+
+  size_t totalVertices = 0;
+  size_t totalIndices = 0;
+  size_t totalPrimitives = 0;
+
+  for (size_t meshIdx = 0; meshIdx < model.meshes.size(); ++meshIdx)
   {
+    auto& mesh = model.meshes[meshIdx];
+    HM_ZONE_SCOPED_N("Process Mesh");
+    HM_ZONE_TEXT(mesh.name.c_str(), mesh.name.size());
+
+    auto meshStart = std::chrono::high_resolution_clock::now();
+
+    log::Info("  Processing mesh [{}]: '{}'", meshIdx, mesh.name);
+
     MeshAsset meshAsset;
     meshAsset.name = mesh.name;
     indices.clear();
     vertices.clear();
-    for (auto& primitive : mesh.primitives)
+
+    size_t meshVertexCount = 0;
+    size_t meshIndexCount = 0;
+
+    for (size_t primIdx = 0; primIdx < mesh.primitives.size(); ++primIdx)
     {
+      auto& primitive = mesh.primitives[primIdx];
+      HM_ZONE_SCOPED_N("Process Primitive");
+
       GeoSurface newSurface;
       newSurface.startIndex = static_cast<uint32_t>(indices.size());
       newSurface.count =
@@ -178,38 +215,53 @@ std::optional<std::vector<std::shared_ptr<hm::MeshAsset>>> hm::loadGltfMeshes(
       size_t initialVtx = vertices.size();
 
       {
+        HM_ZONE_SCOPED_N("Parse Indices");
         auto& indexAccessor = model.accessors[primitive.indices];
         const auto& view = model.bufferViews[indexAccessor.bufferView];
         const auto& buffer = model.buffers[view.buffer];
-        if (indexAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT)
+
+        size_t indexCount = indexAccessor.count;
+        const auto* basePtr =
+            buffer.data.data() + view.byteOffset + indexAccessor.byteOffset;
+
+        indices.reserve(indices.size() + indexCount);
+
+        auto parseIndices = [&]<typename T>(const T* data)
         {
-          const auto* data = reinterpret_cast<const uint32_t*>(
-              buffer.data.data() + view.byteOffset + indexAccessor.byteOffset);
-          for (size_t i = 0; i < indexAccessor.count; i++)
+          for (size_t i = 0; i < indexCount; i++)
+          {
             indices.push_back(static_cast<uint32_t>(data[i]) + initialVtx);
-        }
-        else if (indexAccessor.componentType ==
-                 TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT)
+            if (i % 100 == 0)
+            {
+              log::Debug("    Index[{}]: {}", i, indices.back());
+            }
+          }
+        };
+
+        switch (indexAccessor.componentType)
         {
-          const auto* data = reinterpret_cast<const uint16_t*>(
-              buffer.data.data() + view.byteOffset + indexAccessor.byteOffset);
-          for (size_t i = 0; i < indexAccessor.count; i++)
-            indices.push_back(static_cast<uint32_t>(data[i]) + initialVtx);
+          case TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT:
+            parseIndices(reinterpret_cast<const uint32_t*>(basePtr));
+            break;
+          case TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT:
+            parseIndices(reinterpret_cast<const uint16_t*>(basePtr));
+            break;
+          case TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE:
+            parseIndices(reinterpret_cast<const uint8_t*>(basePtr));
+            break;
         }
-        else if (indexAccessor.componentType ==
-                 TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE)
-        {
-          const auto* data =
-              buffer.data.data() + view.byteOffset + indexAccessor.byteOffset;
-          for (size_t i = 0; i < indexAccessor.count; i++)
-            indices.push_back(static_cast<uint32_t>(data[i]) + initialVtx);
-        }
+
+        meshIndexCount += indexCount;
+        HM_ZONE_VALUE(static_cast<int64_t>(indexCount));
       }
 
+      size_t vertexCount = 0;
       {
+        HM_ZONE_SCOPED_N("Parse Positions");
         auto& accessor =
             model.accessors[primitive.attributes.find("POSITION")->second];
-        vertices.resize(vertices.size() + accessor.count);
+        vertexCount = accessor.count;
+        vertices.resize(vertices.size() + vertexCount);
 
         const auto& view = model.bufferViews[accessor.bufferView];
         const auto& buffer = model.buffers[view.buffer];
@@ -217,84 +269,94 @@ std::optional<std::vector<std::shared_ptr<hm::MeshAsset>>> hm::loadGltfMeshes(
         vert.color = glm::vec4 {1.0f};
         const auto* data = reinterpret_cast<const float*>(
             &buffer.data[view.byteOffset + accessor.byteOffset]);
-        size_t index {0};
-        for (; index < accessor.count; index++)
+        for (size_t i = 0; i < vertexCount; i++)
         {
-          vert.position.x = data[index * 3 + 0];
-          vert.position.y = data[index * 3 + 1];
-          vert.position.z = data[index * 3 + 2];
-          vertices[initialVtx + index] = vert;
+          vert.position.x = data[i * 3 + 0];
+          vert.position.y = data[i * 3 + 1];
+          vert.position.z = data[i * 3 + 2];
+          vertices[initialVtx + i] = vert;
         }
+
+        log::Debug("    Parsed {} positions (first: [{:.2f}, {:.2f}, {:.2f}])",
+                   vertexCount, vertices[initialVtx].position.x,
+                   vertices[initialVtx].position.y,
+                   vertices[initialVtx].position.z);
+
+        meshVertexCount += vertexCount;
+        HM_ZONE_VALUE(static_cast<int64_t>(vertexCount));
       }
+
       {
+        HM_ZONE_SCOPED_N("Parse Normals");
         auto iterator = primitive.attributes.find("NORMAL");
         if (iterator != primitive.attributes.end())
         {
           auto& accessor = model.accessors[iterator->second];
-
           const auto& view = model.bufferViews[accessor.bufferView];
           const auto& buffer = model.buffers[view.buffer];
 
           const auto* data = reinterpret_cast<const float*>(
               &buffer.data[view.byteOffset + accessor.byteOffset]);
-          size_t index {0};
-          for (; index < accessor.count; index++)
+          for (size_t i = 0; i < accessor.count; i++)
           {
-            glm::vec3 normal {};
-            normal.x = data[index * 3 + 0];
-            normal.y = data[index * 3 + 1];
-            normal.z = data[index * 3 + 2];
-            vertices[initialVtx + index].normal = normal;
+            vertices[initialVtx + i].normal = {data[i * 3 + 0], data[i * 3 + 1],
+                                               data[i * 3 + 2]};
           }
+
+          log::Debug("    Parsed {} normals", accessor.count);
         }
       }
+
       {
+        HM_ZONE_SCOPED_N("Parse UVs");
         auto iterator = primitive.attributes.find("TEXCOORD_0");
         if (iterator != primitive.attributes.end())
         {
           auto& accessor = model.accessors[iterator->second];
-
           const auto& view = model.bufferViews[accessor.bufferView];
           const auto& buffer = model.buffers[view.buffer];
 
           const auto* data = reinterpret_cast<const float*>(
               &buffer.data[view.byteOffset + accessor.byteOffset]);
-          size_t index {0};
-          for (; index < accessor.count; index++)
+          for (size_t i = 0; i < accessor.count; i++)
           {
-            glm::vec2 uv {};
-            uv.x = data[index * 2 + 0];
-            uv.y = data[index * 2 + 1];
-            vertices[initialVtx + index].uv_x = uv.x;
-            vertices[initialVtx + index].uv_y = uv.y;
+            vertices[initialVtx + i].uv_x = data[i * 2 + 0];
+            vertices[initialVtx + i].uv_y = data[i * 2 + 1];
           }
+
+          log::Debug("    Parsed {} UVs", accessor.count);
         }
       }
+
       {
+        HM_ZONE_SCOPED_N("Parse Colors");
         auto iterator = primitive.attributes.find("COLOR_0");
         if (iterator != primitive.attributes.end())
         {
           auto& accessor = model.accessors[iterator->second];
-
           const auto& view = model.bufferViews[accessor.bufferView];
           const auto& buffer = model.buffers[view.buffer];
 
           const auto* data = reinterpret_cast<const float*>(
               &buffer.data[view.byteOffset + accessor.byteOffset]);
-          size_t index {0};
-          for (; index < accessor.count; index++)
+          for (size_t i = 0; i < accessor.count; i++)
           {
-            glm::vec4 color {};
-            color.r = data[index * 4 + 0];
-            color.g = data[index * 4 + 1];
-            color.b = data[index * 4 + 2];
-            color.a = data[index * 4 + 3];
-            vertices[initialVtx + index].color = color;
+            vertices[initialVtx + i].color = {data[i * 4 + 0], data[i * 4 + 1],
+                                              data[i * 4 + 2], data[i * 4 + 3]};
           }
+
+          log::Debug("    Parsed {} colors", accessor.count);
         }
       }
+
+      log::Info("    Primitive [{}]: {} vertices, {} indices", primIdx,
+                vertexCount, newSurface.count);
+
       meshAsset.surfaces.push_back(newSurface);
     }
+
+    totalPrimitives += mesh.primitives.size();
+
     constexpr bool OverrideColors = false;
     if (OverrideColors)
     {
@@ -303,10 +365,42 @@ std::optional<std::vector<std::shared_ptr<hm::MeshAsset>>> hm::loadGltfMeshes(
         vtx.color = glm::vec4(vtx.normal, 1.f);
       }
     }
-    meshAsset.meshBuffers = UploadMesh(indices, vertices);
+
+    {
+      HM_ZONE_SCOPED_N("Upload Mesh");
+      auto uploadStart = std::chrono::high_resolution_clock::now();
+      meshAsset.meshBuffers = UploadMesh(indices, vertices);
+      auto uploadEnd = std::chrono::high_resolution_clock::now();
+      auto uploadDuration =
+          std::chrono::duration_cast<std::chrono::microseconds>(uploadEnd -
+                                                                uploadStart);
+      log::Info("    GPU upload: {} us", uploadDuration.count());
+    }
 
     meshes.emplace_back(std::make_shared<MeshAsset>(std::move(meshAsset)));
+
+    auto meshEnd = std::chrono::high_resolution_clock::now();
+    auto meshDuration = std::chrono::duration_cast<std::chrono::microseconds>(
+        meshEnd - meshStart);
+
+    totalVertices += meshVertexCount;
+    totalIndices += meshIndexCount;
+
+    log::Info("    Mesh '{}': {} primitives, {} verts, {} indices ({} us)",
+              mesh.name, mesh.primitives.size(), meshVertexCount,
+              meshIndexCount, meshDuration.count());
   }
+
+  log::Info("=== GLTF Load Summary ===");
+  log::Info("  File: {}", filePath.filename().string());
+  log::Info("  Meshes: {}", meshes.size());
+  log::Info("  Primitives: {}", totalPrimitives);
+  log::Info("  Total vertices: {}", totalVertices);
+  log::Info("  Total indices: {}", totalIndices);
+  log::Info("  Vertex buffer size: {:.2f} KB",
+            (totalVertices * sizeof(Vertex)) / 1024.0f);
+  log::Info("  Index buffer size: {:.2f} KB",
+            (totalIndices * sizeof(uint32_t)) / 1024.0f);
 
   return meshes;
 }
@@ -419,8 +513,8 @@ std::optional<std::shared_ptr<hm::LoadedGLTF>> hm::loadGltf(
     }
     else
     {
-      // we failed to load, so lets give the slot a default white texture to not
-      // completely break loading
+      // we failed to load, so lets give the slot a default white texture to
+      // not completely break loading
       images.push_back(_errorCheckerboardImage);
       log::Error("Gltf failed to load texture {}", image.name);
     }
