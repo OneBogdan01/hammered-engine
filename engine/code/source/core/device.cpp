@@ -20,7 +20,7 @@ Device::Device()
   SetGraphicsAPI(io::LoadCurrentGraphicsAPI());
 
   constexpr SDL_InitFlags flags {SDL_INIT_VIDEO};
-  SDL_SetAppMetadata(WindowTitle, "0", "HammE");
+  SDL_SetAppMetadata(WindowTitle, "0", "hm");
   if (SDL_Init(flags) == false)
   {
     log::Error("SDL could not be initialized");
@@ -33,6 +33,10 @@ Device::Device()
   Initialize();
   // TODO check if init failed
   log::Info("Hammered Engine was initialized");
+#ifdef HM_EDITOR
+  log::Info("Hammered Editor is included initialized");
+
+#endif
 }
 
 void Device::ChangeGraphicsBackend() const

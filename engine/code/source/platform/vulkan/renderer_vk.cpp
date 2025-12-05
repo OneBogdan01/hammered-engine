@@ -13,6 +13,7 @@
 #include "core/device.hpp"
 #include "core/fileio.hpp"
 #include "external/imgui_impl.hpp"
+#include "external/tracy_impl.hpp"
 #include "glslang/Public/ShaderLang.h"
 #include "platform/vulkan/images_vk.hpp"
 #include "platform/vulkan/initializers_vk.hpp"
@@ -379,146 +380,187 @@ void internal::init_descriptors()
 }
 void internal::init_default_data()
 {
-  std::array<Vertex, 4> rect_vertices;
+  HM_ZONE_SCOPED;
 
-  rect_vertices[0].position = {0.5, -0.5, 0};
-  rect_vertices[1].position = {0.5, 0.5, 0};
-  rect_vertices[2].position = {-0.5, -0.5, 0};
-  rect_vertices[3].position = {-0.5, 0.5, 0};
-
-  rect_vertices[0].color = {0, 0, 0, 1};
-  rect_vertices[1].color = {0.5, 0.5, 0.5, 1};
-  rect_vertices[2].color = {1, 0, 0, 1};
-  rect_vertices[3].color = {0, 1, 0, 1};
-
-  std::array<uint32_t, 6> rect_indices;
-
-  rect_indices[0] = 0;
-  rect_indices[1] = 1;
-  rect_indices[2] = 2;
-
-  rect_indices[3] = 2;
-  rect_indices[4] = 1;
-  rect_indices[5] = 3;
-
-  rectangle = UploadMesh(rect_indices, rect_vertices);
-
-  // delete the rectangle data on engine shutdown
-  _mainDeletionQueue.push_function(
-      [&]()
-      {
-        destroy_buffer(rectangle.indexBuffer);
-        destroy_buffer(rectangle.vertexBuffer);
-      });
-
-  // 3 default textures, white, grey, black. 1 pixel each
-  uint32_t white = glm::packUnorm4x8(glm::vec4(1, 1, 1, 1));
-  _whiteImage =
-      create_image((void*)&white, VkExtent3D {1, 1, 1},
-                   VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT);
-
-  uint32_t grey = glm::packUnorm4x8(glm::vec4(0.66f, 0.66f, 0.66f, 1));
-  _greyImage =
-      create_image((void*)&grey, VkExtent3D {1, 1, 1}, VK_FORMAT_R8G8B8A8_UNORM,
-                   VK_IMAGE_USAGE_SAMPLED_BIT);
-
-  uint32_t black = glm::packUnorm4x8(glm::vec4(0, 0, 0, 0));
-  _blackImage =
-      create_image((void*)&black, VkExtent3D {1, 1, 1},
-                   VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT);
-
-  // checkerboard image
-  uint32_t magenta = glm::packUnorm4x8(glm::vec4(1, 0, 1, 1));
-  std::array<uint32_t, 16 * 16> pixels; // for 16x16 checkerboard texture
-  for (int x = 0; x < 16; x++)
   {
-    for (int y = 0; y < 16; y++)
-    {
-      pixels[y * 16 + x] = ((x % 2) ^ (y % 2)) ? magenta : black;
-    }
-  }
-  _errorCheckerboardImage =
-      create_image(pixels.data(), VkExtent3D {16, 16, 1},
-                   VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT);
+    HM_ZONE_SCOPED_N("Create Rectangle Mesh");
+    std::array<Vertex, 4> rect_vertices;
 
-  VkSamplerCreateInfo sampl = {.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO};
+    rect_vertices[0].position = {0.5, -0.5, 0};
+    rect_vertices[1].position = {0.5, 0.5, 0};
+    rect_vertices[2].position = {-0.5, -0.5, 0};
+    rect_vertices[3].position = {-0.5, 0.5, 0};
 
-  sampl.magFilter = VK_FILTER_NEAREST;
-  sampl.minFilter = VK_FILTER_NEAREST;
+    rect_vertices[0].color = {0, 0, 0, 1};
+    rect_vertices[1].color = {0.5, 0.5, 0.5, 1};
+    rect_vertices[2].color = {1, 0, 0, 1};
+    rect_vertices[3].color = {0, 1, 0, 1};
 
-  vkCreateSampler(_device, &sampl, nullptr, &_defaultSamplerNearest);
+    std::array<uint32_t, 6> rect_indices;
 
-  sampl.magFilter = VK_FILTER_LINEAR;
-  sampl.minFilter = VK_FILTER_LINEAR;
-  vkCreateSampler(_device, &sampl, nullptr, &_defaultSamplerLinear);
+    rect_indices[0] = 0;
+    rect_indices[1] = 1;
+    rect_indices[2] = 2;
 
-  _mainDeletionQueue.push_function(
-      [&]()
-      {
-        vkDestroySampler(_device, _defaultSamplerNearest, nullptr);
-        vkDestroySampler(_device, _defaultSamplerLinear, nullptr);
+    rect_indices[3] = 2;
+    rect_indices[4] = 1;
+    rect_indices[5] = 3;
 
-        destroy_image(_whiteImage);
-        destroy_image(_greyImage);
-        destroy_image(_blackImage);
-        destroy_image(_errorCheckerboardImage);
-      });
+    rectangle = UploadMesh(rect_indices, rect_vertices);
 
-  GLTFMetallic_Roughness::MaterialResources materialResources;
-  // default the material textures
-  materialResources.colorImage = _whiteImage;
-  materialResources.colorSampler = _defaultSamplerLinear;
-  materialResources.metalRoughImage = _whiteImage;
-  materialResources.metalRoughSampler = _defaultSamplerLinear;
-
-  // set the uniform buffer for the material data
-  AllocatedBuffer materialConstants = create_buffer(
-      sizeof(GLTFMetallic_Roughness::MaterialConstants),
-      VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-
-  // write the buffer
-  GLTFMetallic_Roughness::MaterialConstants* sceneUniformData =
-      static_cast<GLTFMetallic_Roughness::MaterialConstants*>(
-          materialConstants.allocation->GetMappedData());
-  sceneUniformData->colorFactors = glm::vec4 {1, 1, 1, 1};
-  sceneUniformData->metal_rough_factors = glm::vec4 {1, 0.5, 0, 0};
-
-  _mainDeletionQueue.push_function(
-      [=]()
-      {
-        destroy_buffer(materialConstants);
-      });
-
-  materialResources.dataBuffer = materialConstants.buffer;
-  materialResources.dataBufferOffset = 0;
-
-  defaultData = metalRoughMaterial.write_material(
-      _device, MaterialPass::MainColor, materialResources,
-      globalDescriptorAllocator);
-  // TODO move to a proper function
-  testMeshes = loadGltfMeshes(io::GetPath("models/basicmesh.glb")).value();
-  for (auto& m : testMeshes)
-  {
-    std::shared_ptr<MeshNode> newNode = std::make_shared<MeshNode>();
-    newNode->mesh = m;
-
-    newNode->localTransform = glm::mat4 {1.f};
-    newNode->worldTransform = glm::mat4 {1.f};
-
-    for (auto& s : newNode->mesh->surfaces)
-    {
-      s.material = std::make_shared<GLTFMaterial>(defaultData);
-    }
-
-    loadedNodes[m->name] = std::move(newNode);
+    _mainDeletionQueue.push_function(
+        [&]()
+        {
+          destroy_buffer(rectangle.indexBuffer);
+          destroy_buffer(rectangle.vertexBuffer);
+        });
   }
 
-  std::string structurePath = {io::GetPath("models/structure.glb")};
-  const auto structureFile = loadGltf(_device, structurePath);
+  {
+    HM_ZONE_SCOPED_N("Create Default Textures");
 
-  assert(structureFile.has_value());
+    uint32_t white = glm::packUnorm4x8(glm::vec4(1, 1, 1, 1));
+    _whiteImage =
+        create_image((void*)&white, VkExtent3D {1, 1, 1},
+                     VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT);
 
-  loadedScenes["structure"] = *structureFile;
+    uint32_t grey = glm::packUnorm4x8(glm::vec4(0.66f, 0.66f, 0.66f, 1));
+    _greyImage =
+        create_image((void*)&grey, VkExtent3D {1, 1, 1},
+                     VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT);
+
+    uint32_t black = glm::packUnorm4x8(glm::vec4(0, 0, 0, 0));
+    _blackImage =
+        create_image((void*)&black, VkExtent3D {1, 1, 1},
+                     VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT);
+
+    uint32_t magenta = glm::packUnorm4x8(glm::vec4(1, 0, 1, 1));
+    std::array<uint32_t, 16 * 16> pixels;
+    for (int x = 0; x < 16; x++)
+    {
+      for (int y = 0; y < 16; y++)
+      {
+        pixels[y * 16 + x] = ((x % 2) ^ (y % 2)) ? magenta : black;
+      }
+    }
+    _errorCheckerboardImage =
+        create_image(pixels.data(), VkExtent3D {16, 16, 1},
+                     VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT);
+  }
+
+  {
+    HM_ZONE_SCOPED_N("Create Samplers");
+
+    VkSamplerCreateInfo sampl = {.sType =
+                                     VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO};
+
+    sampl.magFilter = VK_FILTER_NEAREST;
+    sampl.minFilter = VK_FILTER_NEAREST;
+    vkCreateSampler(_device, &sampl, nullptr, &_defaultSamplerNearest);
+
+    sampl.magFilter = VK_FILTER_LINEAR;
+    sampl.minFilter = VK_FILTER_LINEAR;
+    vkCreateSampler(_device, &sampl, nullptr, &_defaultSamplerLinear);
+
+    _mainDeletionQueue.push_function(
+        [&]()
+        {
+          vkDestroySampler(_device, _defaultSamplerNearest, nullptr);
+          vkDestroySampler(_device, _defaultSamplerLinear, nullptr);
+
+          destroy_image(_whiteImage);
+          destroy_image(_greyImage);
+          destroy_image(_blackImage);
+          destroy_image(_errorCheckerboardImage);
+        });
+  }
+
+  {
+    HM_ZONE_SCOPED_N("Setup Default Material");
+
+    GLTFMetallic_Roughness::MaterialResources materialResources;
+    materialResources.colorImage = _whiteImage;
+    materialResources.colorSampler = _defaultSamplerLinear;
+    materialResources.metalRoughImage = _whiteImage;
+    materialResources.metalRoughSampler = _defaultSamplerLinear;
+
+    AllocatedBuffer materialConstants = create_buffer(
+        sizeof(GLTFMetallic_Roughness::MaterialConstants),
+        VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+
+    GLTFMetallic_Roughness::MaterialConstants* sceneUniformData =
+        static_cast<GLTFMetallic_Roughness::MaterialConstants*>(
+            materialConstants.allocation->GetMappedData());
+    sceneUniformData->colorFactors = glm::vec4 {1, 1, 1, 1};
+    sceneUniformData->metal_rough_factors = glm::vec4 {1, 0.5, 0, 0};
+
+    _mainDeletionQueue.push_function(
+        [=]()
+        {
+          destroy_buffer(materialConstants);
+        });
+
+    materialResources.dataBuffer = materialConstants.buffer;
+    materialResources.dataBufferOffset = 0;
+
+    defaultData = metalRoughMaterial.write_material(
+        _device, MaterialPass::MainColor, materialResources,
+        globalDescriptorAllocator);
+  }
+
+  {
+    HM_ZONE_SCOPED_N("Load Test Meshes");
+
+    testMeshes = loadGltfMeshes(io::GetPath("models/basicmesh.glb")).value();
+    HM_ZONE_VALUE(static_cast<int64_t>(testMeshes.size()));
+
+    for (auto& m : testMeshes)
+    {
+      std::shared_ptr<MeshNode> newNode = std::make_shared<MeshNode>();
+      newNode->mesh = m;
+
+      newNode->localTransform = glm::mat4 {1.f};
+      newNode->worldTransform = glm::mat4 {1.f};
+
+      for (auto& s : newNode->mesh->surfaces)
+      {
+        s.material = std::make_shared<GLTFMaterial>(defaultData);
+      }
+
+      loadedNodes[m->name] = std::move(newNode);
+    }
+  }
+
+  {
+    HM_ZONE_SCOPED_N("Load Structure Scene");
+
+    std::string structurePath = {io::GetPath("models/structure.glb")};
+    HM_ZONE_TEXT(structurePath.c_str(), structurePath.size());
+
+    const auto structureFile = loadGltf(_device, structurePath);
+
+    assert(structureFile.has_value());
+
+    loadedScenes["structure"] = *structureFile;
+  }
+  {
+    HM_ZONE_SCOPED_N("Load Beautiful Game Meshes");
+    auto gameMeshes =
+        loadGltfMeshes(io::GetPath("models/a_beautiful_game.glb")).value();
+    HM_ZONE_VALUE(static_cast<int64_t>(gameMeshes.size()));
+    for (auto& m : gameMeshes)
+    {
+      std::shared_ptr<MeshNode> newNode = std::make_shared<MeshNode>();
+      newNode->mesh = m;
+      newNode->localTransform = glm::mat4 {1.f * 10};
+      newNode->worldTransform = glm::mat4 {1.f};
+      for (auto& s : newNode->mesh->surfaces)
+      {
+        s.material = std::make_shared<GLTFMaterial>(defaultData);
+      }
+      loadedNodes[m->name] = std::move(newNode);
+    }
+  }
 }
 void internal::init_mesh_pipeline()
 {
@@ -1108,7 +1150,10 @@ void internal::update_scene(Camera& mainCamera)
   mainDrawContext.OpaqueSurfaces.clear();
   mainDrawContext.TransparentSurfaces.clear();
   loadedScenes["structure"]->Draw(glm::mat4 {1.f}, mainDrawContext);
-
+  for (auto& [name, node] : loadedNodes)
+  {
+    node->Draw(glm::mat4 {1.f}, mainDrawContext);
+  }
   loadedNodes["Suzanne"]->Draw(glm::mat4 {1.f}, mainDrawContext);
 
   glm::mat4 view = mainCamera.getViewMatrix();
