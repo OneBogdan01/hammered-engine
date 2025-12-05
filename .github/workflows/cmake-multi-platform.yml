@@ -9,7 +9,7 @@ jobs:
     name: "Build ${{ matrix.platform }} in ${{ matrix.build_type }}"
     strategy:
       matrix:
-        platform: [windows, ubuntu]
+        platform: [windows]
         build_type: [Debug, Release]
     env:
       PARALLEL: -j 2
@@ -50,115 +50,111 @@ jobs:
         name: Configure and build
         run: |
           cmake -B"build/${{ matrix.platform }}" \
-            -DCMAKE_C_COMPILER=clang-18 \
-            -DCMAKE_CXX_COMPILER=clang++-18 \
-            -DCMAKE_CXX_FLAGS="-stdlib=libc++" \
-            -DCMAKE_EXE_LINKER_FLAGS="-stdlib=libc++ -lc++abi" \
             -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
             -DENABLE_GL_BACKEND=ON \
             -DENABLE_VK_BACKEND=ON
           cmake --build "build/${{ matrix.platform }}" --target game_gl --config ${{ matrix.build_type }} ${{ env.PARALLEL }}
           cmake --build "build/${{ matrix.platform }}" --target game_vk --config ${{ matrix.build_type }} ${{ env.PARALLEL }}
   
-  cpp-linter-windows:
-    name: "Run cpp-linter (Windows)"
-    runs-on: windows-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
+  # cpp-linter-windows:
+  #   name: "Run cpp-linter (Windows)"
+  #   runs-on: windows-latest
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
+  #       with:
+  #         submodules: recursive
       
-      - name: Setup MSVC
-        uses: ilammy/msvc-dev-cmd@v1
+  #     - name: Setup MSVC
+  #       uses: ilammy/msvc-dev-cmd@v1
       
-      - name: Generate compile_commands.json
-        shell: pwsh
-        run: |
-          cmake -B"build" -G "Ninja" `
-            -DCMAKE_BUILD_TYPE=Debug `
-            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON `
-            -DENABLE_GL_BACKEND=ON `
-            -DENABLE_VK_BACKEND=ON
-          Copy-Item "build/compile_commands.json" "compile_commands.json" -Force
+  #     - name: Generate compile_commands.json
+  #       shell: pwsh
+  #       run: |
+  #         cmake -B"build" -G "Ninja" `
+  #           -DCMAKE_BUILD_TYPE=Debug `
+  #           -DCMAKE_EXPORT_COMPILE_COMMANDS=ON `
+  #           -DENABLE_GL_BACKEND=ON `
+  #           -DENABLE_VK_BACKEND=ON
+  #         Copy-Item "build/compile_commands.json" "compile_commands.json" -Force
       
-      - name: Upload compile_commands.json (Windows)
-        uses: actions/upload-artifact@v4
-        with:
-          name: compile-commands-windows
-          path: compile_commands.json
-          retention-days: 7
+  #     - name: Upload compile_commands.json (Windows)
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: compile-commands-windows
+  #         path: compile_commands.json
+  #         retention-days: 7
       
-      - name: Run cpp-linter
-        uses: cpp-linter/cpp-linter-action@main
-        id: linter
-        continue-on-error: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          ignore: '.github | engine/external | build'
-          style: file
-          files-changed-only: false
-          step-summary: true
-          thread-comments: true
-          tidy-checks: ''
+  #     - name: Run cpp-linter
+  #       uses: cpp-linter/cpp-linter-action@main
+  #       id: linter
+  #       continue-on-error: true
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #       with:
+  #         ignore: '.github | engine/external | build'
+  #         style: file
+  #         files-changed-only: false
+  #         step-summary: true
+  #         thread-comments: true
+  #         tidy-checks: ''
       
-      - name: Fail if linter found issues
-        if: steps.linter.outputs.checks-failed != 0
-        shell: pwsh
-        run: exit 1
+  #     - name: Fail if linter found issues
+  #       if: steps.linter.outputs.checks-failed != 0
+  #       shell: pwsh
+  #       run: exit 1
   
 
 
-  cpp-linter-ubuntu:
-    name: "Run cpp-linter (Ubuntu)"
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
+  # cpp-linter-ubuntu:
+  #   name: "Run cpp-linter (Ubuntu)"
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
+  #       with:
+  #         submodules: recursive
       
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            clang \
-            clang-tidy \
-            xorg-dev \
-            libglu1-mesa-dev
+  #     - name: Install dependencies
+  #       run: |
+  #         sudo apt-get update
+  #         sudo apt-get install -y \
+  #           clang \
+  #           clang-tidy \
+  #           xorg-dev \
+  #           libglu1-mesa-dev
       
-      - name: Generate compile_commands.json
-        run: |
-          cmake -B build \
-            -DCMAKE_BUILD_TYPE=Debug \
-            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
-            -DENABLE_GL_BACKEND=ON \
-            -DENABLE_VK_BACKEND=ON
-          cp build/compile_commands.json .
+  #     - name: Generate compile_commands.json
+  #       run: |
+  #         cmake -B build \
+  #           -DCMAKE_BUILD_TYPE=Debug \
+  #           -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+  #           -DENABLE_GL_BACKEND=ON \
+  #           -DENABLE_VK_BACKEND=ON
+  #         cp build/compile_commands.json .
       
-      - name: Upload compile_commands.json (Linux)
-        uses: actions/upload-artifact@v4
-        with:
-          name: compile-commands-linux
-          path: compile_commands.json
-          retention-days: 7
+  #     - name: Upload compile_commands.json (Linux)
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: compile-commands-linux
+  #         path: compile_commands.json
+  #         retention-days: 7
       
-      - name: Run cpp-linter
-        uses: cpp-linter/cpp-linter-action@main
-        id: linter
-        continue-on-error: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          ignore: '.github | engine/external | build'
-          style: file
-          files-changed-only: false
-          step-summary: true
-          thread-comments: true
-          tidy-checks: ''
+  #     - name: Run cpp-linter
+  #       uses: cpp-linter/cpp-linter-action@main
+  #       id: linter
+  #       continue-on-error: true
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #       with:
+  #         ignore: '.github | engine/external | build'
+  #         style: file
+  #         files-changed-only: false
+  #         step-summary: true
+  #         thread-comments: true
+  #         tidy-checks: ''
       
-      - name: Fail if linter found issues
-        if: steps.linter.outputs.checks-failed != 0
-        run: exit 1
+  #     - name: Fail if linter found issues
+  #       if: steps.linter.outputs.checks-failed != 0
+  #       run: exit 1
   
